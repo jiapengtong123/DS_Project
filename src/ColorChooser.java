@@ -98,10 +98,6 @@ public class ColorChooser extends JPanel implements ChangeListener {
         return color;
     }
 
-//    public void setDrawingArea(DrawingArea drawingArea) {
-//        this.drawingArea = drawingArea;
-//    }
-
     public void showColorChooser() {
         //Schedule a job for the event-dispatching thread:
         //creating and showing this application's GUI.

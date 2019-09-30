@@ -33,23 +33,47 @@ public class Shape {
                 break;
             case "Rectangle":
                 if (x1 > x2) {
-                    g2.drawRect(x2, y2, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                    if (y1 > y2) {
+                        g2.drawRect(x2, y2, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                    } else {
+                        g2.drawRect(x2, y1, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                    }
                 } else {
-                    g2.drawRect(x1, y1, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                    if (y1 < y2) {
+                        g2.drawRect(x1, y1, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                    } else {
+                        g2.drawRect(x1, y2, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                    }
                 }
                 break;
             case "Circle":
                 if (x1 > x2) {
-                    g2.drawOval(x2, y2, Math.abs(x2 - x1), Math.abs(x2 - x1));
+                    if (y1 > y2) {
+                        g2.drawOval(x2, y2, Math.abs(x2 - x1), Math.abs(x2 - x1));
+                    } else {
+                        g2.drawOval(x2, y1, Math.abs(x2 - x1), Math.abs(x2 - x1));
+                    }
                 } else {
-                    g2.drawOval(x1, y1, Math.abs(x2 - x1), Math.abs(x2 - x1));
+                    if (y1 < y2) {
+                        g2.drawOval(x1, y1, Math.abs(x2 - x1), Math.abs(x2 - x1));
+                    } else {
+                        g2.drawOval(x1, y2, Math.abs(x2 - x1), Math.abs(x2 - x1));
+                    }
                 }
                 break;
             case "Oval":
                 if (x1 > x2) {
-                    g2.drawOval(x2, y2, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                    if (y1 > y2) {
+                        g2.drawOval(x2, y2, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                    } else {
+                        g2.drawOval(x2, y1, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                    }
                 } else {
-                    g2.drawOval(x1, y1, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                    if (y1 < y2) {
+                        g2.drawOval(x1, y1, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                    } else {
+                        g2.drawOval(x1, y2, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                    }
                 }
                 break;
         }

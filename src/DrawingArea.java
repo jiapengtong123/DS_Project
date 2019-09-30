@@ -25,8 +25,6 @@ public class DrawingArea extends JPanel {
     // color and type
     private Color color = Color.BLACK;
     private String type = "Free Draw";
-    // different type of shapes
-    private Shape shapeLine = new Shape();
 
     public DrawingArea() {
         setBorder(BorderFactory.createLineBorder(Color.black));
@@ -107,7 +105,7 @@ public class DrawingArea extends JPanel {
                 Shape shape = new Shape((int) startPointX, (int) startPointY,
                         (int) endPointX, (int) endPointY, color);
                 shape.setType(type);
-                shapes.add(shape);
+                    shapes.add(shape);
                 startPointX = endPointX;
                 startPointY = endPointY;
                 repaint();
