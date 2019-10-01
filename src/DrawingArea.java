@@ -86,6 +86,7 @@ public class DrawingArea extends JPanel {
             case "Eraser":
                 break;
             default:
+                shapes.remove(eraserBorder);
                 startPointX = e.getX();
                 startPointY = e.getY();
                 shape = new Shape((int) startPointX, (int) startPointY,

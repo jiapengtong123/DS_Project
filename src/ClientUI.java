@@ -78,7 +78,7 @@ public class ClientUI {
         c.weighty = 1;
         c.gridx = 0;
         c.gridy = 1;
-        c.gridheight = 8;
+        c.gridheight = 10;
         pane.add(drawPanel, c);
 
         JButton btnColorChooser = new JButton("Color Chooser");
@@ -129,7 +129,6 @@ public class ClientUI {
         JButton btnOval = new JButton("Oval");
         c.fill = GridBagConstraints.HORIZONTAL;
         c.weightx = 0;
-
         c.weighty = 0;
         c.gridx = 1;
         c.gridy = 6;
@@ -139,12 +138,29 @@ public class ClientUI {
         JButton btnEraser = new JButton("Eraser");
         c.fill = GridBagConstraints.HORIZONTAL;
         c.weightx = 0;
-
         c.weighty = 0;
         c.gridx = 1;
         c.gridy = 7;
         c.gridheight = 1;
         pane.add(btnEraser, c);
+
+        JButton btnEraserSmaller = new JButton("-");
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 0;
+        c.weighty = 0;
+        c.gridx = 1;
+        c.gridy = 8;
+        c.gridheight = 1;
+        pane.add(btnEraserSmaller, c);
+
+        JButton btnEraserBigger = new JButton("+");
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 0;
+        c.weighty = 0;
+        c.gridx = 1;
+        c.gridy = 9;
+        c.gridheight = 1;
+        pane.add(btnEraserBigger, c);
 
         // event listeners
         btnColorChooser.addActionListener(new ActionListener() {
@@ -187,6 +203,20 @@ public class ClientUI {
         btnEraser.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
                 drawingArea.setType("Eraser");
+            }
+        });
+
+        btnEraserSmaller.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent arg0) {
+                drawingArea.setEraserHeight(drawingArea.getEraserHeight() - 5);
+                drawingArea.setEraserWidth(drawingArea.getEraserWidth() - 5);
+            }
+        });
+
+        btnEraserBigger.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent arg0) {
+                drawingArea.setEraserHeight(drawingArea.getEraserHeight() + 5);
+                drawingArea.setEraserWidth(drawingArea.getEraserWidth() + 5);
             }
         });
 
