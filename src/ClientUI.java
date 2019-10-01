@@ -1,8 +1,12 @@
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileFilter;
 import java.rmi.RemoteException;
 
 public class ClientUI {
@@ -12,8 +16,6 @@ public class ClientUI {
     //    private Canvas canvas = null;
     DrawingArea drawingArea = null;
     // canvas width and height
-    private static final int width = 800;
-    private static final int height = 600;
     // Color Chooser
     private ColorChooser chooser = null;
 
@@ -67,6 +69,7 @@ public class ClientUI {
         c.gridx = 0;
         c.gridy = 0;
         c.gridheight = 1;
+        c.gridwidth = 3;
         pane.add(menuBar, c);
 
         // Background for drawingArea
@@ -78,6 +81,7 @@ public class ClientUI {
         c.weighty = 1;
         c.gridx = 0;
         c.gridy = 1;
+        c.gridwidth = 1;
         c.gridheight = 12;
         pane.add(drawPanel, c);
 
@@ -180,6 +184,15 @@ public class ClientUI {
         c.gridy = 11;
         c.gridheight = 1;
         pane.add(btnStroke, c);
+        
+        JButton btnType = new JButton("Type text");
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 0;
+        c.weighty = 0;
+        c.gridx = 1;
+        c.gridy = 12;
+        c.gridheight = 1;
+        pane.add(btnType, c);
 
         // event listeners
         btnColorChooser.addActionListener(new ActionListener() {
@@ -245,18 +258,50 @@ public class ClientUI {
                 drawingArea.setStroke(new BasicStroke(Float.parseFloat(stroke)));
             }
         });
+        
+        btnType.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent arg0) {
+                drawingArea.setType("Type");
+            }
+        });
 
         // Menu event listeners
         newCanvas.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-
-                drawingArea = new DrawingArea();
-                drawingArea.setSize(width, height);
-                drawingArea.setPreferredSize(drawingArea.getPreferredSize());
-                drawingArea.setBackground(Color.white);
-                drawingArea.setVisible(true);
-                c.fill = GridBagConstraints.BOTH;
-                drawPanel.add(drawingArea, c);
+            	
+            	
+            	// Get new canvas dimensions
+            	JPanel container = new JPanel();
+            	JTextField canvasWidth = new JTextField(4);
+            	JTextField canvasHeight = new JTextField(4);
+            	JLabel canvasWarning = new JLabel("The current canvas will be replaced"); 
+            	
+            	if (drawingArea != null) {
+            		container.setLayout(new GridLayout(0, 1, 2, 2));
+            		container.add(canvasWarning);
+            	}
+            
+            	container.add(new JLabel("Width (px): "));
+            	container.add(canvasWidth);
+            	
+            	container.add(new JLabel("Height (px): "));
+            	container.add(canvasHeight);
+            	
+            	int option = JOptionPane.showConfirmDialog(drawPanel, container, "Please enter new canvas dimensions", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
+            	
+            	if (option == JOptionPane.YES_OPTION) {
+            		if (drawingArea != null) {
+            			drawingArea.setVisible(false);
+            			drawPanel.remove(drawingArea);
+            		}
+	                drawingArea = new DrawingArea(Integer.parseInt(canvasWidth.getText()), Integer.parseInt(canvasHeight.getText()));
+	                drawingArea.setSize(Integer.parseInt(canvasWidth.getText()), Integer.parseInt(canvasHeight.getText()));
+	                drawingArea.setPreferredSize(drawingArea.getPreferredSize());
+	                drawingArea.setBackground(Color.white);
+	                drawingArea.setVisible(true);
+	                c.fill = GridBagConstraints.BOTH;
+	                drawPanel.add(drawingArea, c);
+            	}
 
             }
 
@@ -274,8 +319,24 @@ public class ClientUI {
         saveAs.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JFileChooser chooser = new JFileChooser();
+                
+                FileNameExtensionFilter filter = new FileNameExtensionFilter("PNG","png");
+                FileNameExtensionFilter filter2 = new FileNameExtensionFilter("JPEG","jpg");
+                chooser.setFileFilter(filter);
+                chooser.setFileFilter(filter2);
+                chooser.setAcceptAllFileFilterUsed(false);
+                
                 chooser.showSaveDialog(null);
-
+                String type = "png";
+                File file = chooser.getSelectedFile();
+                
+                // Set file extension type
+                if (chooser.getFileFilter() instanceof FileNameExtensionFilter) {
+                	String[] exts = ((FileNameExtensionFilter)chooser.getFileFilter()).getExtensions();
+                	type = exts[0];
+                }
+                
+                drawingArea.saveImage(type, chooser.getSelectedFile());
             }
 
         });

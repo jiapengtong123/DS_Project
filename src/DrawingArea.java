@@ -1,21 +1,35 @@
+import javax.imageio.ImageIO;
 import javax.sound.midi.Soundbank;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.File;
+import java.io.IOException;
 
 import shapes.Shape;
 
 public class DrawingArea extends JPanel {
-    private static final int width = 800;
-    private static final int height = 600;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private int width;
+    private int height;
     private Graphics2D g2 = null;
     private BufferedImage bufferedImage = null;
     private static final Color BACKGROUND_COLOR = Color.WHITE;
+    
     // free draw start and end shapes
     private float startPointX = 0;
     private float startPointY = 0;
@@ -35,9 +49,11 @@ public class DrawingArea extends JPanel {
     private Shape eraserBorder = new Shape();
     private int borderSize = 3;
 
-    public DrawingArea() {
+    public DrawingArea(int width, int height) {
+    	this.width = width;
+    	this.height = height;
         setBorder(BorderFactory.createLineBorder(Color.black));
-
+        
         addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
                 mousePressedHandler(e);
@@ -86,6 +102,46 @@ public class DrawingArea extends JPanel {
         switch (type) {
             case "Eraser":
                 break;
+            case "Type":
+            	final JTextField textField = new JTextField(20);
+            	textField.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+            	textField.setSize(textField.getPreferredSize());
+            	int x = e.getX();
+            	int y = e.getY();
+            	System.out.println(x + " " + y);
+            	textField.setLocation(x,y);
+            	add(textField);
+            	revalidate();
+            	repaint();
+            	textField.requestFocusInWindow();
+            	
+            	textField.addKeyListener(new KeyListener(){
+            		public void keyPressed(KeyEvent e){
+            			if(e.getKeyChar() == KeyEvent.VK_ENTER){
+            				shape = new Shape(x,y,color);
+            				shape.setText(textField.getText());
+            				shape.setType(type);
+            				shapes.add(shape);
+            				remove(textField);
+             			}       
+             		}
+
+ 					@Override
+ 					public void keyReleased(KeyEvent arg0) {
+ 						// TODO Auto-generated method stub
+ 						
+ 					}
+
+ 					@Override
+ 					public void keyTyped(KeyEvent arg0) {
+ 						// TODO Auto-generated method stub
+ 						
+ 					}
+                         }
+                     );
+             	
+                 
+            	break;
             default:
                 shapes.remove(eraserBorder);
                 startPointX = e.getX();
@@ -129,6 +185,8 @@ public class DrawingArea extends JPanel {
                 shapes.add(eraser);
                 repaint();
                 break;
+            case "Type":
+            	break;
             default:
                 endPointX = e.getX();
                 endPointY = e.getY();
@@ -194,5 +252,20 @@ public class DrawingArea extends JPanel {
 
     public void setStroke(Stroke stroke) {
         this.stroke = stroke;
+    }
+    
+    public void saveImage(String type, File file) {
+    	BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    	Graphics2D gimg = img.createGraphics();
+    	printAll(gimg);
+    	gimg.dispose();
+    	String filename = file.toString() + '.' + type;
+    	File fileExt = new File(filename);
+    	try {
+			ImageIO.write(img, type, fileExt);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 }

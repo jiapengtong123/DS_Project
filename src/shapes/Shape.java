@@ -9,9 +9,17 @@ public class Shape {
     private String type;
     private int x1, y1, x2, y2;
     private int eraserWidth, eraserHeight;
+    private String text;
 
     public Shape() {
 
+    }
+    
+    // constructor for text
+    public Shape(int x1, int y1, Color color) {
+        this.x1 = x1;
+        this.y1 = y1;
+        this.color = color;
     }
 
     // constructor for lines
@@ -99,6 +107,9 @@ public class Shape {
                 g2.setColor(Color.BLACK);
                 g2.drawRect(x1, y1, eraserWidth, eraserHeight);
                 break;
+            case "Type":
+ 				g2.drawString(getText(), x1, y1);
+            	break;
         }
     }
 
@@ -174,4 +185,12 @@ public class Shape {
     public void setEraserHeight(int eraserHeight) {
         this.eraserHeight = eraserHeight;
     }
+
+	public String getText() {
+		return text;
+	}
+
+	public void setText(String text) {
+		this.text = text;
+	}
 }
