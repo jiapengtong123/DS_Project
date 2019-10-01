@@ -39,7 +39,7 @@ public class ClientUI {
         }
 
         // elements and layout
-        
+
         // Menu Bar
         JMenuBar menuBar = new JMenuBar();
         JMenu fileMenu = new JMenu("File");
@@ -68,17 +68,17 @@ public class ClientUI {
         c.gridy = 0;
         c.gridheight = 1;
         pane.add(menuBar, c);
-        
+
         // Background for drawingArea
         JDesktopPane drawPanel = new JDesktopPane();
-        drawPanel.setPreferredSize(new Dimension(800,600));
+        drawPanel.setPreferredSize(new Dimension(800, 600));
         drawPanel.setBackground(Color.gray);
         drawPanel.setVisible(true);
         c.fill = GridBagConstraints.BOTH;
         c.weighty = 1;
         c.gridx = 0;
         c.gridy = 1;
-        c.gridheight = 7;
+        c.gridheight = 8;
         pane.add(drawPanel, c);
 
         JButton btnColorChooser = new JButton("Color Chooser");
@@ -136,6 +136,16 @@ public class ClientUI {
         c.gridheight = 1;
         pane.add(btnOval, c);
 
+        JButton btnEraser = new JButton("Eraser");
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 0;
+
+        c.weighty = 0;
+        c.gridx = 1;
+        c.gridy = 7;
+        c.gridheight = 1;
+        pane.add(btnEraser, c);
+
         // event listeners
         btnColorChooser.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
@@ -173,13 +183,19 @@ public class ClientUI {
                 drawingArea.setType("Oval");
             }
         });
-        
+
+        btnEraser.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent arg0) {
+                drawingArea.setType("Eraser");
+            }
+        });
+
         // Menu event listeners
         newCanvas.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
 
                 drawingArea = new DrawingArea();
-                drawingArea.setSize(width,height);
+                drawingArea.setSize(width, height);
                 drawingArea.setPreferredSize(drawingArea.getPreferredSize());
                 drawingArea.setBackground(Color.white);
                 drawingArea.setVisible(true);
@@ -189,7 +205,7 @@ public class ClientUI {
             }
 
         });
-        
+
         saveCanvas.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JFileChooser chooser = new JFileChooser();
@@ -198,7 +214,7 @@ public class ClientUI {
             }
 
         });
-        
+
         saveAs.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JFileChooser chooser = new JFileChooser();
@@ -207,7 +223,7 @@ public class ClientUI {
             }
 
         });
-        
+
         openCanvas.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JFileChooser chooser = new JFileChooser();
@@ -216,10 +232,10 @@ public class ClientUI {
             }
 
         });
-        
+
         closeProgram.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-            	 System.exit(0);
+                System.exit(0);
             }
 
         });

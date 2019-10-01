@@ -8,6 +8,7 @@ public class Shape {
     private Color color;
     private String type;
     private int x1, y1, x2, y2;
+    private int eraserWidth, eraserHeight;
 
     public Shape() {
 
@@ -20,6 +21,15 @@ public class Shape {
         this.x2 = x2;
         this.y2 = y2;
         this.color = color;
+    }
+
+    // constructor for eraser
+    public Shape(int x1, int y1, Color color, int width, int height) {
+        this.x1 = x1;
+        this.y1 = y1;
+        this.color = color;
+        eraserWidth = width;
+        eraserHeight = height;
     }
 
     public void draw(Graphics2D g2) {
@@ -75,6 +85,14 @@ public class Shape {
                         g2.drawOval(x1, y2, Math.abs(x2 - x1), Math.abs(y2 - y1));
                     }
                 }
+                break;
+            case "Eraser":
+                g2.drawRect(x1, y1, eraserWidth, eraserHeight);
+                g2.fillRect(x1, y1, eraserWidth, eraserHeight);
+                break;
+            case "EraserBorder":
+                g2.setColor(Color.BLACK);
+                g2.drawRect(x1, y1, eraserWidth, eraserHeight);
                 break;
         }
     }
@@ -134,5 +152,21 @@ public class Shape {
 
     public void setY2(int y2) {
         this.y2 = y2;
+    }
+
+    public int getEraserWidth() {
+        return eraserWidth;
+    }
+
+    public void setEraserWidth(int eraserWidth) {
+        this.eraserWidth = eraserWidth;
+    }
+
+    public int getEraserHeight() {
+        return eraserHeight;
+    }
+
+    public void setEraserHeight(int eraserHeight) {
+        this.eraserHeight = eraserHeight;
     }
 }
