@@ -36,12 +36,15 @@ public class Shape {
         g2.setColor(color);
         switch (type) {
             case "Free Draw":
+                g2.setStroke(stroke);
                 g2.drawLine(x1, y1, x2, y2);
                 break;
             case "Line":
+                g2.setStroke(stroke);
                 g2.drawLine(x1, y1, x2, y2);
                 break;
             case "Rectangle":
+                g2.setStroke(stroke);
                 if (x1 > x2) {
                     if (y1 > y2) {
                         g2.drawRect(x2, y2, Math.abs(x2 - x1), Math.abs(y2 - y1));
@@ -57,6 +60,7 @@ public class Shape {
                 }
                 break;
             case "Circle":
+                g2.setStroke(stroke);
                 if (x1 > x2) {
                     if (y1 > y2) {
                         g2.drawOval(x2, y2, Math.abs(x2 - x1), Math.abs(x2 - x1));
@@ -72,6 +76,7 @@ public class Shape {
                 }
                 break;
             case "Oval":
+                g2.setStroke(stroke);
                 if (x1 > x2) {
                     if (y1 > y2) {
                         g2.drawOval(x2, y2, Math.abs(x2 - x1), Math.abs(y2 - y1));

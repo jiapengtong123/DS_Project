@@ -78,7 +78,7 @@ public class ClientUI {
         c.weighty = 1;
         c.gridx = 0;
         c.gridy = 1;
-        c.gridheight = 10;
+        c.gridheight = 12;
         pane.add(drawPanel, c);
 
         JButton btnColorChooser = new JButton("Color Chooser");
@@ -162,6 +162,25 @@ public class ClientUI {
         c.gridheight = 1;
         pane.add(btnEraserBigger, c);
 
+        JTextField textField;
+        textField = new JTextField();
+        c.insets = new Insets(0, 0, 5, 5);
+        c.weightx = 0.0;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 1;
+        c.gridy = 10;
+        c.gridwidth = 1;
+        pane.add(textField, c);
+
+        JButton btnStroke = new JButton("Set Stroke");
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 0;
+        c.weighty = 0;
+        c.gridx = 1;
+        c.gridy = 11;
+        c.gridheight = 1;
+        pane.add(btnStroke, c);
+
         // event listeners
         btnColorChooser.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
@@ -217,6 +236,13 @@ public class ClientUI {
             public void actionPerformed(ActionEvent arg0) {
                 drawingArea.setEraserHeight(drawingArea.getEraserHeight() + 5);
                 drawingArea.setEraserWidth(drawingArea.getEraserWidth() + 5);
+            }
+        });
+
+        btnStroke.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent arg0) {
+                String stroke = textField.getText();
+                drawingArea.setStroke(new BasicStroke(Float.parseFloat(stroke)));
             }
         });
 

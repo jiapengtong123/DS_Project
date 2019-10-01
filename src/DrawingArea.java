@@ -25,6 +25,7 @@ public class DrawingArea extends JPanel {
 
     // color and type
     private Color color = Color.BLACK;
+    private Stroke stroke = new BasicStroke(5);
     private String type = "Free Draw";
     // shape instance to store current shape, used for real time drawing
     private Shape shape = null;
@@ -92,6 +93,7 @@ public class DrawingArea extends JPanel {
                 shape = new Shape((int) startPointX, (int) startPointY,
                         (int) startPointX, (int) startPointY, color);
                 shape.setType(type);
+                shape.setStroke(stroke);
                 shapes.add(shape);
                 break;
         }
@@ -105,6 +107,7 @@ public class DrawingArea extends JPanel {
                 Shape temp = new Shape((int) startPointX, (int) startPointY,
                         (int) endPointX, (int) endPointY, color);
                 temp.setType(type);
+                temp.setStroke(stroke);
                 shapes.add(temp);
                 startPointX = endPointX;
                 startPointY = endPointY;
@@ -183,5 +186,13 @@ public class DrawingArea extends JPanel {
 
     public void setEraserHeight(int eraserHeight) {
         this.eraserHeight = eraserHeight;
+    }
+
+    public Stroke getStroke() {
+        return stroke;
+    }
+
+    public void setStroke(Stroke stroke) {
+        this.stroke = stroke;
     }
 }
