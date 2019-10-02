@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.io.File;
 import java.io.IOException;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 
 import shapes.Shape;
 
@@ -103,43 +105,37 @@ public class DrawingArea extends JPanel {
             case "Eraser":
                 break;
             case "Type":
+            	setLayout(null);
             	final JTextField textField = new JTextField(20);
             	textField.setBorder(javax.swing.BorderFactory.createEmptyBorder());
             	textField.setSize(textField.getPreferredSize());
             	int x = e.getX();
             	int y = e.getY();
-            	System.out.println(x + " " + y);
             	textField.setLocation(x,y);
             	add(textField);
             	revalidate();
             	repaint();
             	textField.requestFocusInWindow();
             	
-            	textField.addKeyListener(new KeyListener(){
-            		public void keyPressed(KeyEvent e){
-            			if(e.getKeyChar() == KeyEvent.VK_ENTER){
-            				shape = new Shape(x,y,color);
-            				shape.setText(textField.getText());
-            				shape.setType(type);
-            				shapes.add(shape);
-            				remove(textField);
-             			}       
-             		}
+            	textField.addFocusListener(new FocusListener() { 
+                    public void focusLost(FocusEvent e) { 
+                    	shape = new Shape(x,y,color);
+        				shape.setText(textField.getText());
+        				shape.setType(type);
+        				shapes.add(shape);
+        				remove(textField);
+                    }
 
- 					@Override
- 					public void keyReleased(KeyEvent arg0) {
- 						// TODO Auto-generated method stub
- 						
- 					}
-
- 					@Override
- 					public void keyTyped(KeyEvent arg0) {
- 						// TODO Auto-generated method stub
- 						
- 					}
-                         }
-                     );
-             	
+					@Override
+					public void focusGained(FocusEvent arg0) {
+						// TODO Auto-generated method stub
+						
+					} 
+                  }); 
+            	
+            	
+            	
+            	repaint();
                  
             	break;
             default:
@@ -254,6 +250,7 @@ public class DrawingArea extends JPanel {
         this.stroke = stroke;
     }
     
+    // Save the canvas as an image file
     public void saveImage(String type, File file) {
     	BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     	Graphics2D gimg = img.createGraphics();
