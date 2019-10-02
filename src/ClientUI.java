@@ -21,9 +21,9 @@ public class ClientUI {
     final static boolean RIGHT_TO_LEFT = false;
     //    private Canvas canvas = null;
     DrawingArea drawingArea = null;
-    // canvas width and height
-    // Color Chooser
+    // Color Chooser, stroke
     private ColorChooser chooser = null;
+    private Stroke stroke = new BasicStroke(5);
 
     public static void main(String[] args) throws RemoteException {
         ClientUI ui = new ClientUI();
@@ -300,7 +300,7 @@ public class ClientUI {
             			drawingArea.setVisible(false);
             			drawPanel.remove(drawingArea);
             		}
-	                drawingArea = new DrawingArea(Integer.parseInt(canvasWidth.getText()), Integer.parseInt(canvasHeight.getText()));
+	                drawingArea = new DrawingArea();
 	                drawingArea.setSize(Integer.parseInt(canvasWidth.getText()), Integer.parseInt(canvasHeight.getText()));
 	                drawingArea.setPreferredSize(drawingArea.getPreferredSize());
 	                drawingArea.setBackground(Color.white);
@@ -369,9 +369,17 @@ public class ClientUI {
 				try {
 					fi = new FileInputStream(file);
 	    			ObjectInputStream oi = new ObjectInputStream(fi);
+	    			if (drawingArea != null) {
+            			drawingArea.setVisible(false);
+            			drawPanel.remove(drawingArea);
+            		}
+	    			
 	    			drawingArea = (DrawingArea) oi.readObject();
 	    			oi.close();
-
+	    			
+	    			drawingArea.setStroke(stroke);
+	    			drawingArea.setVisible(true);
+	    			drawingArea.setPreferredSize(drawingArea.getPreferredSize());
 	                c.fill = GridBagConstraints.BOTH;
 	                drawPanel.add(drawingArea, c);
 	                

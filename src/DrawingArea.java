@@ -19,8 +19,8 @@ public class DrawingArea extends JPanel {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private int width;
-    private int height;
+	private int width = 100;
+    private int height = 100;
     transient private Graphics2D g2 = null;
     transient private BufferedImage bufferedImage = null;
     private static final Color BACKGROUND_COLOR = Color.WHITE;
@@ -44,9 +44,7 @@ public class DrawingArea extends JPanel {
     private Shape eraserBorder = new Shape();
     private int borderSize = 3;
 
-    public DrawingArea(int width, int height) {
-    	this.width = width;
-    	this.height = height;
+    public DrawingArea() {
         setBorder(BorderFactory.createLineBorder(Color.black));
         addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
@@ -65,8 +63,8 @@ public class DrawingArea extends JPanel {
                 mouseReleasedHandler(e);
             }
         });
-
     }
+    
 
     public Dimension getPreferredSize() {
         return new Dimension(width, height);
@@ -74,9 +72,9 @@ public class DrawingArea extends JPanel {
 
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-
-        stroke = new BasicStroke(5);
-
+        if(stroke == null) {
+            stroke = new BasicStroke(5);
+        }
         if (bufferedImage == null) {
             // set up white board
             bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);

@@ -47,7 +47,9 @@ public class Shape implements Serializable{
 
     public void draw(Graphics2D g2) {
 
-        stroke = new BasicStroke(5);
+    	if(stroke == null) {
+            stroke = new BasicStroke(5);
+        }
         g2.setColor(color);
         switch (type) {
             case "Free Draw":
