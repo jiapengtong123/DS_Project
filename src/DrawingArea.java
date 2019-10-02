@@ -197,6 +197,9 @@ public class DrawingArea extends JPanel {
                 break;
             case "Oval":
                 break;
+            case "Eraser":
+            	shapes.remove(eraserBorder);
+                break;
         }
     }
 
