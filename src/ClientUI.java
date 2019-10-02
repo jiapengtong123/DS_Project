@@ -92,7 +92,9 @@ public class ClientUI {
         c.gridwidth = 1;
         c.gridheight = 12;
         pane.add(drawPanel, c);
+        
 
+        
         JButton btnColorChooser = new JButton("Color Chooser");
         c.weightx = 0;
         c.weighty = 0;
@@ -201,6 +203,17 @@ public class ClientUI {
         c.gridy = 12;
         c.gridheight = 1;
         pane.add(btnType, c);
+        
+        JButton btnSelect = new JButton("Select");
+        c.weightx = 0;
+        c.weighty = 0;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 1;
+        c.gridy = 13;
+        c.gridheight = 1;
+        pane.add(btnSelect, c);
+        
+        
 
         // event listeners
         btnColorChooser.addActionListener(new ActionListener() {
@@ -269,13 +282,20 @@ public class ClientUI {
         btnStroke.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
                 String stroke = textField.getText();
-                drawingArea.setStroke(new BasicStroke(Float.parseFloat(stroke)));
+                drawingArea.setStroke(new BasicStroke(Float.parseFloat(stroke),BasicStroke.CAP_ROUND,
+                        BasicStroke.JOIN_ROUND));
             }
         });
         
         btnType.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
                 drawingArea.setType("Type");
+            }
+        });
+        
+        btnSelect.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent arg0) {
+                drawingArea.setType("Select");
             }
         });
 
@@ -413,6 +433,7 @@ public class ClientUI {
 
         });
     }
+    
 
     private void buildUI() {
         JFrame frame = new JFrame("White Board");

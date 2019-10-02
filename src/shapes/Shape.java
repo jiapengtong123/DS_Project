@@ -1,6 +1,7 @@
 package shapes;
 
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.io.Serializable;
 
 public class Shape implements Serializable{
@@ -14,6 +15,7 @@ public class Shape implements Serializable{
     private String type;
     private int x1, y1, x2, y2;
     private String text;
+    private boolean selected = false;
 
     public Shape() {
 
@@ -99,7 +101,6 @@ public class Shape implements Serializable{
                 }
                 break;
             case "Eraser":
-            	color = color.WHITE;
             	g2.setStroke(stroke);
                 g2.drawLine(x1, y1, x2, y2);
                 break;
@@ -114,6 +115,65 @@ public class Shape implements Serializable{
     }
 
     // getters and setters
+    
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+    }
+    
+    public boolean isSelected() {
+        return selected;
+    }
+    
+    public Rectangle2D getBounds() {
+    	switch(type){
+    	case"Rectangle":
+    		if (x1 > x2) {
+                if (y1 > y2) {
+                	return new Rectangle2D.Double(x2, y2, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                } else {
+                	return new Rectangle2D.Double(x2, y1, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                }
+            } else {
+                if (y1 < y2) {
+                	return new Rectangle2D.Double(x1, y1, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                } else {
+                	return new Rectangle2D.Double(x1, y2, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                }
+            }
+    	case "Oval":
+    		if (x1 > x2) {
+	    		if (y1 > y2) {
+	    			return new Rectangle2D.Double(x2, y2, Math.abs(x2 - x1), Math.abs(y2 - y1));
+	            } else {
+	            	return new Rectangle2D.Double(x2, y1, Math.abs(x2 - x1), Math.abs(y2 - y1));
+	            }
+    		}else {
+                if (y1 < y2) {
+                	return new Rectangle2D.Double(x1, y1, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                } else {
+                	return new Rectangle2D.Double(x1, y2, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                }
+            }
+    	case "Circle":
+    		if (x1 > x2) {
+                if (y1 > y2) {
+                	return new Rectangle2D.Double(x2, y2, Math.abs(x2 - x1), Math.abs(x2 - x1));
+                } else {
+                	return new Rectangle2D.Double(x2, y1, Math.abs(x2 - x1), Math.abs(x2 - x1));
+                }
+            } else {
+                if (y1 < y2) {
+                	return new Rectangle2D.Double(x1, y1, Math.abs(x2 - x1), Math.abs(x2 - x1));
+                } else {
+                	return new Rectangle2D.Double(x1, y2, Math.abs(x2 - x1), Math.abs(x2 - x1));
+                }
+            }
+    	default:
+    		return new Rectangle2D.Double(x1, y1, x2, y2);
+    	}
+    	
+    }
+    
     public Stroke getStroke() {
         return stroke;
     }

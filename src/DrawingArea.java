@@ -37,11 +37,13 @@ public class DrawingArea extends JPanel {
     transient private BasicStroke stroke = (new BasicStroke(15f,
             BasicStroke.CAP_ROUND,
             BasicStroke.JOIN_ROUND));
-    private String type = "Free Draw";
+    private String type = "Select";
     // shape instance to store current shape, used for real time drawing
     private Shape shape = null;
-    // eraser width and height
+    // reference Shapes
     private Shape eraserBorder = new Shape();
+    private Shape boundingBox = new Shape();
+    private Shape selectedShape = new Shape();
     private int borderSize = 3;
 
     public DrawingArea() {
@@ -97,6 +99,35 @@ public class DrawingArea extends JPanel {
 
     private void mousePressedHandler(MouseEvent e) {
         switch (type) {
+        	case "Select":
+        		// Iterate through shapelist in reverse so newer shapes are selected over older ones
+        		for (int i = shapes.size()-1; i >= -1; i--){
+        			// -1 means no shapes were selected
+        			if (i==-1) {
+        				shapes.remove(boundingBox);
+        				if (selectedShape != null) {
+        					selectedShape.setSelected(false);
+        				}
+        				selectedShape = null;
+        				break;
+        			}
+
+        			Shape s = shapes.get(i);
+        			//If the clicked point is within shape boundaries, create bounding box, select shape
+        			if (s.getBounds().contains(e.getPoint()) && s != boundingBox) {
+        				s.setSelected(true);
+        				shapes.remove(boundingBox);
+        				boundingBox = new Shape(s.getX1(), s.getY1(), s.getX2(), s.getY2(),
+        						Color.RED);
+        				boundingBox.setType("Rectangle");
+        				shapes.add(boundingBox);
+        				selectedShape = s;
+        				repaint();
+        				break;
+        			}
+        			repaint();
+                };
+        		break;
             case "Type":
             	setLayout(null);
             	final JTextField textField = new JTextField(20);
@@ -140,6 +171,17 @@ public class DrawingArea extends JPanel {
 
     private void mouseDraggedHandler(MouseEvent e) {
         switch (type) {
+	        case "Select":
+	        	if (selectedShape != null) {
+	        		endPointX = e.getX();
+	                endPointY = e.getY();
+	                selectedShape.setX2((int) endPointX);
+	                selectedShape.setY2((int) endPointY);
+	                boundingBox.setX2((int) endPointX);
+	                boundingBox.setY2((int) endPointY);
+	                repaint();
+	        	}
+	    		break;
             case "Free Draw":
                 endPointX = e.getX();
                 endPointY = e.getY();
@@ -156,7 +198,7 @@ public class DrawingArea extends JPanel {
                 // draws a white stroke
             	endPointX = e.getX();
                 endPointY = e.getY();
-                Shape eraser = new Shape(e.getX() - (int)stroke.getLineWidth() / 2, e.getY() - (int)stroke.getLineWidth() / 2, (int) endPointX, (int) endPointY,
+                Shape eraser = new Shape(e.getX(), e.getY(), (int) endPointX, (int) endPointY,
                         BACKGROUND_COLOR);
                 eraser.setType(type);
                 eraser.setType(type);
@@ -164,13 +206,14 @@ public class DrawingArea extends JPanel {
                 shapes.add(eraser);
                 startPointX = endPointX;
                 startPointY = endPointY;
-                repaint();
-                
-                eraserBorder.setX1(e.getX() - ((int)stroke.getLineWidth() + borderSize) / 2);
-                eraserBorder.setY1(e.getY() - ((int)stroke.getLineWidth() + borderSize) / 2);
+
+            	shapes.remove(eraserBorder);
+                eraserBorder.setX1(e.getX());
+                eraserBorder.setY1(e.getY());
                 eraserBorder.setType("EraserBorder");
-                shapes.remove(eraserBorder);
                 shapes.add(eraserBorder);
+
+                repaint();
                 
                 break;
             case "Type":
@@ -199,9 +242,13 @@ public class DrawingArea extends JPanel {
                 break;
             case "Eraser":
             	shapes.remove(eraserBorder);
+            	repaint();
                 break;
+            case "Select":
+        		break;
         }
     }
+
 
     public void drawShape() {
         for (Shape shape : shapes) {
