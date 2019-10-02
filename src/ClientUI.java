@@ -7,6 +7,12 @@ import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.rmi.RemoteException;
 
 public class ClientUI {
@@ -311,6 +317,18 @@ public class ClientUI {
             public void actionPerformed(ActionEvent e) {
                 JFileChooser chooser = new JFileChooser();
                 chooser.showSaveDialog(null);
+                File file = chooser.getSelectedFile();
+                try {
+                	 
+                    FileOutputStream fileOut = new FileOutputStream(file);
+                    ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
+                    objectOut.writeObject(drawingArea);
+                    objectOut.close();
+                    System.out.println("The Object  was succesfully written to a file");
+         
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
 
             }
 
@@ -345,6 +363,28 @@ public class ClientUI {
             public void actionPerformed(ActionEvent e) {
                 JFileChooser chooser = new JFileChooser();
                 chooser.showOpenDialog(null);
+                File file = chooser.getSelectedFile();
+                FileInputStream fi;
+                
+				try {
+					fi = new FileInputStream(file);
+	    			ObjectInputStream oi = new ObjectInputStream(fi);
+	    			drawingArea = (DrawingArea) oi.readObject();
+	    			oi.close();
+
+	                c.fill = GridBagConstraints.BOTH;
+	                drawPanel.add(drawingArea, c);
+	                
+				} catch (FileNotFoundException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} catch (ClassNotFoundException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 
             }
 

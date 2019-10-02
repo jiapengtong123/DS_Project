@@ -2,13 +2,7 @@ import javax.imageio.ImageIO;
 import javax.sound.midi.Soundbank;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.Point;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
@@ -16,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.io.File;
 import java.io.IOException;
-import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
 import shapes.Shape;
@@ -28,8 +21,8 @@ public class DrawingArea extends JPanel {
 	private static final long serialVersionUID = 1L;
 	private int width;
     private int height;
-    private Graphics2D g2 = null;
-    private BufferedImage bufferedImage = null;
+    transient private Graphics2D g2 = null;
+    transient private BufferedImage bufferedImage = null;
     private static final Color BACKGROUND_COLOR = Color.WHITE;
     
     // free draw start and end shapes
@@ -41,7 +34,7 @@ public class DrawingArea extends JPanel {
 
     // color and type
     private Color color = Color.BLACK;
-    private Stroke stroke = new BasicStroke(5);
+    transient private Stroke stroke = new BasicStroke(5);
     private String type = "Free Draw";
     // shape instance to store current shape, used for real time drawing
     private Shape shape = null;
@@ -55,7 +48,6 @@ public class DrawingArea extends JPanel {
     	this.width = width;
     	this.height = height;
         setBorder(BorderFactory.createLineBorder(Color.black));
-        
         addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
                 mousePressedHandler(e);
@@ -82,6 +74,8 @@ public class DrawingArea extends JPanel {
 
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+
+        stroke = new BasicStroke(5);
 
         if (bufferedImage == null) {
             // set up white board
@@ -116,7 +110,6 @@ public class DrawingArea extends JPanel {
             	revalidate();
             	repaint();
             	textField.requestFocusInWindow();
-            	
             	textField.addFocusListener(new FocusListener() { 
                     public void focusLost(FocusEvent e) { 
                     	shape = new Shape(x,y,color);
@@ -129,14 +122,9 @@ public class DrawingArea extends JPanel {
 					@Override
 					public void focusGained(FocusEvent arg0) {
 						// TODO Auto-generated method stub
-						
 					} 
                   }); 
-            	
-            	
-            	
             	repaint();
-                 
             	break;
             default:
                 shapes.remove(eraserBorder);

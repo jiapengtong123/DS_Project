@@ -1,10 +1,15 @@
 package shapes;
 
 import java.awt.*;
+import java.io.Serializable;
 
-public class Shape {
-    // basic information of the shape
-    private Stroke stroke;
+public class Shape implements Serializable{
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	// basic information of the shape
+    transient private Stroke stroke;
     private Color color;
     private String type;
     private int x1, y1, x2, y2;
@@ -41,6 +46,8 @@ public class Shape {
     }
 
     public void draw(Graphics2D g2) {
+
+        stroke = new BasicStroke(5);
         g2.setColor(color);
         switch (type) {
             case "Free Draw":
