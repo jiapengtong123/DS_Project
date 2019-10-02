@@ -34,18 +34,22 @@ public class DrawingArea extends JPanel {
 
     // color and type
     private Color color = Color.BLACK;
-    transient private Stroke stroke = new BasicStroke(5);
+    transient private BasicStroke stroke = (new BasicStroke(15f,
+            BasicStroke.CAP_ROUND,
+            BasicStroke.JOIN_ROUND));
     private String type = "Free Draw";
     // shape instance to store current shape, used for real time drawing
     private Shape shape = null;
     // eraser width and height
-    private int eraserWidth = 20;
-    private int eraserHeight = 20;
     private Shape eraserBorder = new Shape();
     private int borderSize = 3;
 
     public DrawingArea() {
-        setBorder(BorderFactory.createLineBorder(Color.black));
+        startListeners();
+    }
+    
+    public void startListeners() {
+    	setBorder(BorderFactory.createLineBorder(Color.black));
         addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
                 mousePressedHandler(e);
@@ -64,7 +68,6 @@ public class DrawingArea extends JPanel {
             }
         });
     }
-    
 
     public Dimension getPreferredSize() {
         return new Dimension(width, height);
@@ -94,8 +97,6 @@ public class DrawingArea extends JPanel {
 
     private void mousePressedHandler(MouseEvent e) {
         switch (type) {
-            case "Eraser":
-                break;
             case "Type":
             	setLayout(null);
             	final JTextField textField = new JTextField(20);
@@ -152,20 +153,25 @@ public class DrawingArea extends JPanel {
                 repaint();
                 break;
             case "Eraser":
-                // set eraser border attributes
-                eraserBorder.setX1(e.getX() - (eraserWidth + borderSize) / 2);
-                eraserBorder.setY1(e.getY() - (eraserHeight + borderSize) / 2);
-                eraserBorder.setEraserWidth(eraserWidth + borderSize);
-                eraserBorder.setEraserHeight(eraserHeight + borderSize);
+                // draws a white stroke
+            	endPointX = e.getX();
+                endPointY = e.getY();
+                Shape eraser = new Shape(e.getX() - (int)stroke.getLineWidth() / 2, e.getY() - (int)stroke.getLineWidth() / 2, (int) endPointX, (int) endPointY,
+                        BACKGROUND_COLOR);
+                eraser.setType(type);
+                eraser.setType(type);
+                eraser.setStroke(stroke);
+                shapes.add(eraser);
+                startPointX = endPointX;
+                startPointY = endPointY;
+                repaint();
+                
+                eraserBorder.setX1(e.getX() - ((int)stroke.getLineWidth() + borderSize) / 2);
+                eraserBorder.setY1(e.getY() - ((int)stroke.getLineWidth() + borderSize) / 2);
                 eraserBorder.setType("EraserBorder");
                 shapes.remove(eraserBorder);
                 shapes.add(eraserBorder);
-                // create new white rectangles to cover old shapes
-                Shape eraser = new Shape(e.getX() - eraserWidth / 2, e.getY() - eraserHeight / 2,
-                        BACKGROUND_COLOR, eraserWidth, eraserHeight);
-                eraser.setType(type);
-                shapes.add(eraser);
-                repaint();
+                
                 break;
             case "Type":
             	break;
@@ -212,27 +218,11 @@ public class DrawingArea extends JPanel {
         this.type = type;
     }
 
-    public int getEraserWidth() {
-        return eraserWidth;
-    }
-
-    public void setEraserWidth(int eraserWidth) {
-        this.eraserWidth = eraserWidth;
-    }
-
-    public int getEraserHeight() {
-        return eraserHeight;
-    }
-
-    public void setEraserHeight(int eraserHeight) {
-        this.eraserHeight = eraserHeight;
-    }
-
     public Stroke getStroke() {
         return stroke;
     }
 
-    public void setStroke(Stroke stroke) {
+    public void setStroke(BasicStroke stroke) {
         this.stroke = stroke;
     }
     

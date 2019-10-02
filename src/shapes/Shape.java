@@ -9,11 +9,10 @@ public class Shape implements Serializable{
 	 */
 	private static final long serialVersionUID = 1L;
 	// basic information of the shape
-    transient private Stroke stroke;
+    transient private BasicStroke stroke;
     private Color color;
     private String type;
     private int x1, y1, x2, y2;
-    private int eraserWidth, eraserHeight;
     private String text;
 
     public Shape() {
@@ -34,15 +33,6 @@ public class Shape implements Serializable{
         this.x2 = x2;
         this.y2 = y2;
         this.color = color;
-    }
-
-    // constructor for eraser
-    public Shape(int x1, int y1, Color color, int width, int height) {
-        this.x1 = x1;
-        this.y1 = y1;
-        this.color = color;
-        eraserWidth = width;
-        eraserHeight = height;
     }
 
     public void draw(Graphics2D g2) {
@@ -109,12 +99,13 @@ public class Shape implements Serializable{
                 }
                 break;
             case "Eraser":
-                g2.drawRect(x1, y1, eraserWidth, eraserHeight);
-                g2.fillRect(x1, y1, eraserWidth, eraserHeight);
+            	color = color.WHITE;
+            	g2.setStroke(stroke);
+                g2.drawLine(x1, y1, x2, y2);
                 break;
             case "EraserBorder":
                 g2.setColor(Color.BLACK);
-                g2.drawRect(x1, y1, eraserWidth, eraserHeight);
+                g2.drawOval(x1,y1,(int)stroke.getLineWidth(),(int)stroke.getLineWidth());
                 break;
             case "Type":
  				g2.drawString(getText(), x1, y1);
@@ -127,7 +118,7 @@ public class Shape implements Serializable{
         return stroke;
     }
 
-    public void setStroke(Stroke stroke) {
+    public void setStroke(BasicStroke stroke) {
         this.stroke = stroke;
     }
 
@@ -177,22 +168,6 @@ public class Shape implements Serializable{
 
     public void setY2(int y2) {
         this.y2 = y2;
-    }
-
-    public int getEraserWidth() {
-        return eraserWidth;
-    }
-
-    public void setEraserWidth(int eraserWidth) {
-        this.eraserWidth = eraserWidth;
-    }
-
-    public int getEraserHeight() {
-        return eraserHeight;
-    }
-
-    public void setEraserHeight(int eraserHeight) {
-        this.eraserHeight = eraserHeight;
     }
 
 	public String getText() {

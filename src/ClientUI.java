@@ -23,7 +23,9 @@ public class ClientUI {
     DrawingArea drawingArea = null;
     // Color Chooser, stroke
     private ColorChooser chooser = null;
-    private Stroke stroke = new BasicStroke(5);
+    private BasicStroke stroke = (new BasicStroke(15f,
+            BasicStroke.CAP_ROUND,
+            BasicStroke.JOIN_ROUND));
 
     public static void main(String[] args) throws RemoteException {
         ClientUI ui = new ClientUI();
@@ -246,15 +248,21 @@ public class ClientUI {
 
         btnEraserSmaller.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
-                drawingArea.setEraserHeight(drawingArea.getEraserHeight() - 5);
-                drawingArea.setEraserWidth(drawingArea.getEraserWidth() - 5);
+                int strokeWidth = (int)stroke.getLineWidth() - 1;
+                stroke = (new BasicStroke(strokeWidth,
+                        BasicStroke.CAP_ROUND,
+                        BasicStroke.JOIN_ROUND));
+                drawingArea.setStroke(stroke);
             }
         });
 
         btnEraserBigger.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent arg0) {
-                drawingArea.setEraserHeight(drawingArea.getEraserHeight() + 5);
-                drawingArea.setEraserWidth(drawingArea.getEraserWidth() + 5);
+        	public void actionPerformed(ActionEvent arg0) {
+                int strokeWidth = (int)stroke.getLineWidth() + 1;
+                stroke = (new BasicStroke(strokeWidth,
+                        BasicStroke.CAP_ROUND,
+                        BasicStroke.JOIN_ROUND));
+                drawingArea.setStroke(stroke);
             }
         });
 
@@ -324,7 +332,6 @@ public class ClientUI {
                     ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
                     objectOut.writeObject(drawingArea);
                     objectOut.close();
-                    System.out.println("The Object  was succesfully written to a file");
          
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -375,6 +382,7 @@ public class ClientUI {
             		}
 	    			
 	    			drawingArea = (DrawingArea) oi.readObject();
+	    			drawingArea.startListeners();
 	    			oi.close();
 	    			
 	    			drawingArea.setStroke(stroke);
