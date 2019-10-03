@@ -114,14 +114,16 @@ public class DrawingArea extends JPanel {
 
         			Shape s = shapes.get(i);
         			//If the clicked point is within shape boundaries, create bounding box, select shape
-        			if (s.getBounds().contains(e.getPoint()) && s != boundingBox) {
+        			if (s.getBounds().contains(e.getPoint()) && s != boundingBox && s.getType() != "Eraser" && s.getType() != "Free Draw") {
         				s.setSelected(true);
         				shapes.remove(boundingBox);
         				boundingBox = new Shape(s.getX1(), s.getY1(), s.getX2(), s.getY2(),
         						Color.RED);
         				boundingBox.setType("Rectangle");
-        				shapes.add(boundingBox);
         				selectedShape = s;
+        				shapes.remove(s);
+        				shapes.add(s);
+        				shapes.add(boundingBox);
         				repaint();
         				break;
         			}
@@ -155,6 +157,8 @@ public class DrawingArea extends JPanel {
 					} 
                   }); 
             	repaint();
+            	break;
+            case "Eraser":
             	break;
             default:
                 shapes.remove(eraserBorder);
@@ -198,12 +202,12 @@ public class DrawingArea extends JPanel {
                 // draws a white stroke
             	endPointX = e.getX();
                 endPointY = e.getY();
-                Shape eraser = new Shape(e.getX(), e.getY(), (int) endPointX, (int) endPointY,
+                temp = new Shape(e.getX(), e.getY(), (int) endPointX, (int) endPointY,
                         BACKGROUND_COLOR);
-                eraser.setType(type);
-                eraser.setType(type);
-                eraser.setStroke(stroke);
-                shapes.add(eraser);
+                temp.setType(type);
+                temp.setType(type);
+                temp.setStroke(stroke);
+                shapes.add(temp);
                 startPointX = endPointX;
                 startPointY = endPointY;
 
@@ -212,7 +216,21 @@ public class DrawingArea extends JPanel {
                 eraserBorder.setY1(e.getY());
                 eraserBorder.setType("EraserBorder");
                 shapes.add(eraserBorder);
-
+                
+                for (int i = shapes.size()-1; i >= -1; i--){
+                	if (i==-1) {
+        				break;
+        			}
+                	Shape s = shapes.get(i);
+        			//If the clicked point is within shape boundaries, create bounding box, select shape
+        			if (s.getBounds().contains(e.getPoint()) && s != boundingBox && s.getType() != "Eraser") {
+        				shapes.remove(s);
+        				repaint();
+        				break;
+        			}
+        			repaint();
+                };
+                
                 repaint();
                 
                 break;
