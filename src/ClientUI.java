@@ -90,7 +90,7 @@ public class ClientUI {
         c.gridx = 0;
         c.gridy = 1;
         c.gridwidth = 1;
-        c.gridheight = 12;
+        c.gridheight = 15;
         pane.add(drawPanel, c);
         
 
