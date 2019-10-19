@@ -1,3 +1,4 @@
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
@@ -330,6 +331,8 @@ public class ClientUI {
             		}
 	                drawingArea = new DrawingArea();
 	                drawingArea.setSize(Integer.parseInt(canvasWidth.getText()), Integer.parseInt(canvasHeight.getText()));
+	                drawingArea.setHeight(Integer.parseInt(canvasHeight.getText()));
+	                drawingArea.setWidth(Integer.parseInt(canvasWidth.getText()));
 	                drawingArea.setPreferredSize(drawingArea.getPreferredSize());
 	                drawingArea.setBackground(Color.white);
 	                drawingArea.setVisible(true);
@@ -373,7 +376,6 @@ public class ClientUI {
                 
                 chooser.showSaveDialog(null);
                 String type = "png";
-                File file = chooser.getSelectedFile();
                 
                 // Set file extension type
                 if (chooser.getFileFilter() instanceof FileNameExtensionFilter) {
@@ -412,16 +414,35 @@ public class ClientUI {
 	                drawPanel.add(drawingArea, c);
 	                
 				} catch (FileNotFoundException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
+					try {
+						BufferedImage img = ImageIO.read(file);
+						int width = img.getWidth();
+						int height = img.getHeight();
+						System.out.println(width + " " + height);
+						if (drawingArea != null) {
+	            			drawingArea.setVisible(false);
+	            			drawPanel.remove(drawingArea);
+	            		}
+		    			
+		    			drawingArea = new DrawingArea();
+		    			drawingArea.addBg(img);
+		    			drawingArea.startListeners();
+		    			drawingArea.setStroke(stroke);
+		    			drawingArea.setVisible(true);
+		    			drawingArea.setSize(width,height);
+		                c.fill = GridBagConstraints.BOTH;
+		                drawPanel.add(drawingArea, c);
+		                
+					} catch (IOException e2) {
+						e1.printStackTrace();
+					}
 				} catch (ClassNotFoundException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
-
+				
+				
             }
 
         });

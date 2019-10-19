@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.io.Serializable;
 
+
 public class Shape implements Serializable{
     /**
 	 * 
@@ -16,8 +17,17 @@ public class Shape implements Serializable{
     private int x1, y1, x2, y2;
     private String text;
     private boolean selected = false;
+    private float strokeSize = 5;
 
-    public Shape() {
+    public float getStrokeSize() {
+		return strokeSize;
+	}
+
+	public void setStrokeSize(float strokeSize) {
+		this.strokeSize = strokeSize;
+	}
+
+	public Shape() {
 
     }
     
@@ -40,7 +50,8 @@ public class Shape implements Serializable{
     public void draw(Graphics2D g2) {
 
     	if(stroke == null) {
-            stroke = new BasicStroke(5);
+            stroke = new BasicStroke(strokeSize, BasicStroke.CAP_ROUND,
+                    BasicStroke.JOIN_ROUND);
         }
         g2.setColor(color);
         switch (type) {
@@ -126,7 +137,7 @@ public class Shape implements Serializable{
     
     public Rectangle2D getBounds() {
     	switch(type){
-    	case"Rectangle":
+		case"Rectangle":
     		if (x1 > x2) {
                 if (y1 > y2) {
                 	return new Rectangle2D.Double(x2, y2, Math.abs(x2 - x1), Math.abs(y2 - y1));
@@ -169,7 +180,7 @@ public class Shape implements Serializable{
                 }
             }
     	default:
-    		return new Rectangle2D.Double(x1, y1, x2, y2);
+    		return new Rectangle2D.Double(0,0,0,0);
     	}
     	
     }

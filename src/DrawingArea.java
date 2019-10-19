@@ -1,10 +1,10 @@
 import javax.imageio.ImageIO;
-import javax.sound.midi.Soundbank;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +20,8 @@ public class DrawingArea extends JPanel {
 	 */
 	private static final long serialVersionUID = 1L;
 	private int width = 100;
-    private int height = 100;
+	private int height = 100;
+	
     transient private Graphics2D g2 = null;
     transient private BufferedImage bufferedImage = null;
     private static final Color BACKGROUND_COLOR = Color.WHITE;
@@ -44,7 +45,6 @@ public class DrawingArea extends JPanel {
     private Shape eraserBorder = new Shape();
     private Shape boundingBox = new Shape();
     private Shape selectedShape = new Shape();
-    private int borderSize = 3;
 
     public DrawingArea() {
         startListeners();
@@ -88,6 +88,13 @@ public class DrawingArea extends JPanel {
                     RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setColor(Color.WHITE);
             g2.fillRect(0, 0, width, height);
+        }else {
+        	g2 = (Graphics2D) g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        	AffineTransform aTran = new AffineTransform();
+            aTran.translate(0, 0);
+            g2.transform(aTran);
+        	g2.drawImage(bufferedImage,aTran,this);
         }
 
         // get graphic instance
@@ -131,6 +138,7 @@ public class DrawingArea extends JPanel {
                 };
         		break;
             case "Type":
+            	shapes.remove(boundingBox);
             	setLayout(null);
             	final JTextField textField = new JTextField(20);
             	textField.setBorder(javax.swing.BorderFactory.createEmptyBorder());
@@ -159,9 +167,11 @@ public class DrawingArea extends JPanel {
             	repaint();
             	break;
             case "Eraser":
+            	shapes.remove(boundingBox);
             	break;
             default:
                 shapes.remove(eraserBorder);
+                shapes.remove(boundingBox);
                 startPointX = e.getX();
                 startPointY = e.getY();
                 shape = new Shape((int) startPointX, (int) startPointY,
@@ -193,6 +203,7 @@ public class DrawingArea extends JPanel {
                         (int) endPointX, (int) endPointY, color);
                 temp.setType(type);
                 temp.setStroke(stroke);
+                temp.setStrokeSize(stroke.getLineWidth());
                 shapes.add(temp);
                 startPointX = endPointX;
                 startPointY = endPointY;
@@ -207,6 +218,7 @@ public class DrawingArea extends JPanel {
                 temp.setType(type);
                 temp.setType(type);
                 temp.setStroke(stroke);
+                temp.setStrokeSize(stroke.getLineWidth());
                 shapes.add(temp);
                 startPointX = endPointX;
                 startPointY = endPointY;
@@ -216,14 +228,13 @@ public class DrawingArea extends JPanel {
                 eraserBorder.setY1(e.getY());
                 eraserBorder.setType("EraserBorder");
                 shapes.add(eraserBorder);
-                
                 for (int i = shapes.size()-1; i >= -1; i--){
                 	if (i==-1) {
         				break;
         			}
                 	Shape s = shapes.get(i);
-        			//If the clicked point is within shape boundaries, create bounding box, select shape
-        			if (s.getBounds().contains(e.getPoint()) && s != boundingBox && s.getType() != "Eraser") {
+        			//If the eraser shape intersects an object, erase it.
+        			if (s.getBounds().contains(e.getPoint()) && s != boundingBox) {
         				shapes.remove(s);
         				repaint();
         				break;
@@ -241,6 +252,7 @@ public class DrawingArea extends JPanel {
                 endPointY = e.getY();
                 shape.setX2((int) endPointX);
                 shape.setY2((int) endPointY);
+                shape.setStrokeSize(stroke.getLineWidth());
                 repaint();
                 break;
         }
@@ -296,6 +308,7 @@ public class DrawingArea extends JPanel {
     
     // Save the canvas as an image file
     public void saveImage(String type, File file) {
+    	System.out.println(width + " " + height);
     	BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     	Graphics2D gimg = img.createGraphics();
     	printAll(gimg);
@@ -309,4 +322,16 @@ public class DrawingArea extends JPanel {
 			e.printStackTrace();
 		}
     }
+    
+    public void addBg(BufferedImage bg) {
+    	this.bufferedImage = bg;
+    }
+    
+    public void setWidth(int width) {
+		this.width = width;
+	}
+
+	public void setHeight(int height) {
+		this.height = height;
+	}
 }
