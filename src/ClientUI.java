@@ -15,8 +15,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 
-public class ClientUI {
+public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
     final static boolean shouldFill = true;
     final static boolean shouldWeightX = true;
     final static boolean RIGHT_TO_LEFT = false;
@@ -28,12 +29,19 @@ public class ClientUI {
             BasicStroke.CAP_ROUND,
             BasicStroke.JOIN_ROUND));
 
-    public static void main(String[] args) throws RemoteException {
+//    public static void main(String[] args) throws RemoteException {
+//        ClientUI ui = new ClientUI();
+//        ui.start();
+//    }
+
+    // test rmi call
+    public void startUI() throws RemoteException {
         ClientUI ui = new ClientUI();
         ui.start();
     }
 
-    public ClientUI() {
+    public ClientUI() throws RemoteException {
+        super();
         chooser = new ColorChooser();
     }
 

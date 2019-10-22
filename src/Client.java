@@ -1,22 +1,20 @@
-import java.rmi.Naming;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
+import java.rmi.RemoteException;
 
+// client use rmi object to run client ui and server functions
 public class Client {
     public static void main(String[] args) {
-
         try {
-            //Connect to the rmiregistry that is running on localhost
-            Registry registry = LocateRegistry.getRegistry("localhost");
-
-            //Retrieve the stub/proxy for the remote math object from the registry
-//            IRemoteCanvas remoteMath = (IRemoteCanvas) Naming.lookup("//localhost:3005/Canvas");
-            //Call methods on the remote object as if it was a local object
-            System.out.println("Client: calling remote methods");
-//            remoteMath.start();
-        } catch (Exception e) {
+            // start a connection by socket with ip and port
+            NetworkConnectModule connection = new NetworkConnectModule();
+            connection.setIP("localhost");
+            connection.setPORT("3005");
+            connection.connect();
+            // server give a rmi stub name and use it to get the rmi object
+            ClientUIInterface UI = connection.getRmiObject(connection.getRmiName("Tom"));
+            // start the whiteboard ui
+            UI.startUI();
+        } catch (RemoteException e) {
             e.printStackTrace();
         }
-
     }
 }
