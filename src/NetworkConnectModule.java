@@ -1,15 +1,20 @@
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import shapes.Shape;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
+import java.lang.reflect.Type;
 import java.net.Socket;
-import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.Base64;
 
 // handle connection to server and return a rmi object to client to use
 public class NetworkConnectModule {
@@ -51,12 +56,11 @@ public class NetworkConnectModule {
         try {
             // convert username to json and send to server
             Gson gson = new Gson();
-            output.writeUTF(gson.toJson(username));
+            output.writeUTF(gson.toJson(new Message("connect_user", username)));
             output.flush();
 
             // get back the rmi name, then we can use the server object
-            String dataReceived = input.readUTF();
-            rmiName = gson.fromJson(dataReceived, String.class);
+            rmiName = (String) gson.fromJson(input.readUTF(), Message.class).getData();
             System.out.println(rmiName);
             return rmiName;
         } catch (IOException e) {
@@ -81,4 +85,41 @@ public class NetworkConnectModule {
         }
         return null;
     }
+
+    // add a new shape to server and get back a new buffer image to update
+    public BufferedImage sendShapeAndGetImage(Shape shape) {
+        try {
+            // convert username to json and send to server
+            Gson gson = new Gson();
+            output.writeUTF(gson.toJson(new Message("add_shape", "Shape.class", shape)));
+            output.flush();
+
+            // get back buffer image object
+            Message message = gson.fromJson(input.readUTF(), Message.class);
+            BufferedImage bufferedImage = decodeToImage((String) message.getData());
+            System.out.println("get a buffer image to update");
+
+            return bufferedImage;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    // decode image string to a buffer image
+    public static BufferedImage decodeToImage(String imageString) {
+        BufferedImage image = null;
+        byte[] imageByte;
+        try {
+            Base64.Decoder decoder = Base64.getDecoder();
+            imageByte = decoder.decode(imageString);
+            ByteArrayInputStream bis = new ByteArrayInputStream(imageByte);
+            image = ImageIO.read(bis);
+            bis.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return image;
+    }
+
 }

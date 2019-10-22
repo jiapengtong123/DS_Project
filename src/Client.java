@@ -13,6 +13,7 @@ public class Client {
             ClientUIInterface UI = connection.getRmiObject(connection.getRmiName("Tom"));
             // start the whiteboard ui
             UI.startUI();
+
         } catch (RemoteException e) {
             e.printStackTrace();
         }

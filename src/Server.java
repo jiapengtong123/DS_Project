@@ -1,19 +1,32 @@
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import shapes.Shape;
 
+import javax.imageio.ImageIO;
 import javax.net.ServerSocketFactory;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
 
 public class Server {
     private Registry registry;
+    private List<Shape> shapes;
+    private Graphics2D g2 = null;
+    private BufferedImage bufferedImage = null;
 
     Server() {
         try {
@@ -22,8 +35,14 @@ public class Server {
         } catch (RemoteException e) {
             e.printStackTrace();
         }
+        shapes = new ArrayList<Shape>();
+        bufferedImage = new BufferedImage(600, 800, BufferedImage.TYPE_INT_RGB);
+        g2 = bufferedImage.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setColor(Color.WHITE);
+        g2.fillRect(0, 0, 600, 800);
     }
-
 
     public static void main(String[] args) {
         try {
@@ -62,31 +81,22 @@ public class Server {
             DataInputStream input = new DataInputStream(clientSocket.getInputStream());
             // Output Stream
             DataOutputStream output = new DataOutputStream(clientSocket.getOutputStream());
-
-            String sendData = "";
-            String receiveData = "";
+            // store option use to stop server thread
+            String option = "";
             Gson gson = new Gson();
 
-            while (true) {
-                receiveData = input.readUTF();
-                receiveData = gson.fromJson(receiveData, String.class);
-
-                System.out.println("CLIENT " + " says: " + receiveData);
-
-                // generate an unique id and send back
-                sendData = generateID(receiveData);
-
-                // bind a new stub name with id
-                registry.rebind(sendData, new ClientUI());
-
-                output.writeUTF(sendData);
+            while (!"stop".equals(option)) {
+                // get receive data and convert to message object
+                Message message = gson.fromJson(input.readUTF(), Message.class);
+                option = message.getOption();
+                System.out.println("CLIENT " + " says: " + message.getData());
+                // handle different options and send back result
+                output.writeUTF(gson.toJson(handleOptions(message)));
             }
 
-//            input.close();
-//            output.close();
-//            clientSocket.close();
-
-
+            input.close();
+            output.close();
+            clientSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -98,7 +108,58 @@ public class Server {
         return username + UUID.randomUUID();
     }
 
-    // bind a new client ui with the stub name
+    public Message handleOptions(Message message) throws RemoteException {
+        // if a new user connect, create a rmi object form him and return the stub name
+        if ("connect_user".equals(message.getOption())) {
+            // generate an unique id and send back, data should be username
+            String ID = generateID((String) message.getData());
+            // bind a new stub name with id
+            registry.rebind(ID, new ClientUI());
+            return new Message("", ID);
+        }
 
+        // add a new shape to the shape list, convert the canvas to image buffer and send back to client
+        if ("add_shape".equals(message.getOption())) {
+            Type typeShapeType = new TypeToken<Shape>() {
+            }.getType();
+            Gson gson = new Gson();
 
+            System.out.println("add a new shape into white board.");
+            // covert message to shape data
+            Shape new_shape = gson.fromJson(message.getData().toString(), typeShapeType);
+            // add new shape
+            shapes.add(new_shape);
+            // update graphic
+            for (Shape shape : shapes) {
+                shape.draw(g2);
+            }
+            // send back new image buffer messages
+            return new Message("", encodeToString(bufferedImage, "png"));
+        }
+        return null;
+    }
+
+    // broadcast buffer image to all clients to update
+    public void broadcast() {
+
+    }
+
+    // encode buffer image to string to transfer by json
+    public static String encodeToString(BufferedImage image, String type) {
+        String imageString = null;
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+        try {
+            ImageIO.write(image, type, bos);
+            byte[] imageBytes = bos.toByteArray();
+
+            Base64.Encoder encoder = Base64.getEncoder();
+            imageString = encoder.encodeToString(imageBytes);
+
+            bos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return imageString;
+    }
 }
