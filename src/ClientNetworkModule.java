@@ -17,7 +17,7 @@ import java.rmi.registry.Registry;
 import java.util.Base64;
 
 // handle connection to server and return a rmi object to client to use
-public class NetworkConnectModule {
+public class ClientNetworkModule {
     private String IP = "";
     private String PORT = "";
     private Socket socket = null;
@@ -25,7 +25,7 @@ public class NetworkConnectModule {
     private DataOutputStream output = null;
     private String rmiName = null;
 
-    NetworkConnectModule() {
+    ClientNetworkModule() {
 
     }
 

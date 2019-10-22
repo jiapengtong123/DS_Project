@@ -5,7 +5,7 @@ public class Client {
     public static void main(String[] args) {
         try {
             // start a connection by socket with ip and port
-            NetworkConnectModule connection = new NetworkConnectModule();
+            ClientNetworkModule connection = new ClientNetworkModule();
             connection.setIP("localhost");
             connection.setPORT("3005");
             connection.connect();

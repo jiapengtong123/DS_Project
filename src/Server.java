@@ -77,26 +77,20 @@ public class Server {
     // receive socket connection request, create an UUID for client rmi stub
     private void serveClient(Socket client) {
         try (Socket clientSocket = client) {
-            // Input stream
-            DataInputStream input = new DataInputStream(clientSocket.getInputStream());
-            // Output Stream
-            DataOutputStream output = new DataOutputStream(clientSocket.getOutputStream());
+            ServerNetworkModule serverNetworkModule = new ServerNetworkModule();
+            serverNetworkModule.setInput(new DataInputStream(clientSocket.getInputStream()));
+            serverNetworkModule.setOutput(new DataOutputStream(clientSocket.getOutputStream()));
             // store option use to stop server thread
             String option = "";
-            Gson gson = new Gson();
 
             while (!"stop".equals(option)) {
-                // get receive data and convert to message object
-                Message message = gson.fromJson(input.readUTF(), Message.class);
+                Message message = serverNetworkModule.getMessage();
                 option = message.getOption();
                 System.out.println("CLIENT " + " says: " + message.getData());
-                // handle different options and send back result
-                output.writeUTF(gson.toJson(handleOptions(message)));
+                serverNetworkModule.sendMessage(handleOptions(message));
             }
 
-            input.close();
-            output.close();
-            clientSocket.close();
+            serverNetworkModule.stopConnection();
         } catch (IOException e) {
             e.printStackTrace();
         }

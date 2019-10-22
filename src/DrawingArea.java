@@ -46,7 +46,7 @@ public class DrawingArea extends JPanel {
     private Shape boundingBox = new Shape();
     private Shape selectedShape = new Shape();
     // connect with server to transfer shape and images
-    private NetworkConnectModule connection = new NetworkConnectModule();
+    private ClientNetworkModule connection = new ClientNetworkModule();
 
     public DrawingArea() {
         // start connection
