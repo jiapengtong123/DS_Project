@@ -20,7 +20,6 @@ public class Client extends Thread {
             connection.stop();
             UI.startUI();
             System.out.println("start ui");
-
         } catch (RemoteException e) {
             e.printStackTrace();
         }

@@ -48,14 +48,22 @@ public class Server {
     public static void main(String[] args) {
         try {
             // start socket port
-            new Server().start("3005");
+            Server server = new Server();
+            Thread messageThread = new Thread(() -> server.messageStart("3005"));
+            Thread drawingThread = new Thread(() -> server.drawingStart("3006"));
+            // start thread for handle message and add new shapes
+            messageThread.start();
+            // start thread for sending buffer image to all clients
+            drawingThread.start();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
 
     }
 
-    public void start(String port) {
+    // start message thread
+    public void messageStart(String port) {
         ServerSocketFactory factory = ServerSocketFactory.getDefault();
 
         try (ServerSocket server = factory.createServerSocket(Integer.parseInt(port))) {
@@ -130,25 +138,51 @@ public class Server {
             for (Shape shape : shapes) {
                 shape.draw(g2);
             }
-
-//            broadcast(new_shape);
-
             // send back new image buffer messages
-            return new Message("", encodeToString(bufferedImage, "png"));
+            return new Message("", "success");
         }
         return null;
     }
 
-    // broadcast buffer image to all clients to update
-    public void broadcast(Shape shape) {
-        for (ClientUIInterface client: clients){
-            try {
-                System.out.println(client);
-                client.addShape(shape);
-            } catch (RemoteException e) {
-                e.printStackTrace();
+
+    // handle whiteboard shape data
+    public void drawingStart(String port) {
+        ServerSocketFactory factory = ServerSocketFactory.getDefault();
+
+        try (ServerSocket server = factory.createServerSocket(Integer.parseInt(port))) {
+            System.out.println("Waiting for client connection-");
+            // Wait for connections.
+            while (true) {
+                Socket client = server.accept();
+                System.out.println("Client " + ": Applying for connection!");
+
+                // Start a new thread for a connection
+                Thread t = new Thread(() -> serveDrawingClient(client));
+                t.start();
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+    }
+
+    private void serveDrawingClient(Socket client) {
+        try (Socket clientSocket = client) {
+            ServerNetworkModule serverNetworkModule = new ServerNetworkModule();
+            serverNetworkModule.setInput(new DataInputStream(clientSocket.getInputStream()));
+            serverNetworkModule.setOutput(new DataOutputStream(clientSocket.getOutputStream()));
+            while (true) {
+                serverNetworkModule.sendMessage(updateBufferImage());
+            }
+//            serverNetworkModule.stopConnection();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    // send back new image buffer messages
+    private Message updateBufferImage() throws RemoteException {
+        return new Message("", encodeToString(bufferedImage, "png"));
     }
 
     // encode buffer image to string to transfer by json

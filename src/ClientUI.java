@@ -34,7 +34,6 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
 //        ui.start();
 //    }
 
-    // test rmi call
     public void startUI() throws RemoteException {
         ClientUI ui = new ClientUI();
         ui.start();
@@ -471,7 +470,6 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
 
         });
     }
-    
 
     private void buildUI() {
         JFrame frame = new JFrame("White Board");
@@ -488,12 +486,6 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
                 buildUI();
             }
         });
-    }
-
-    public void addShape(Shape shape){
-        System.out.println(drawingArea);
-        System.out.println("add shape");
-        drawingArea.addShape(shape);
     }
 
     public void paint(Graphics g) {

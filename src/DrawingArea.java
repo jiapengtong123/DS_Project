@@ -46,19 +46,29 @@ public class DrawingArea extends JPanel {
     private Shape boundingBox = new Shape();
     private Shape selectedShape = new Shape();
     // connect with server to transfer shape and images
-    private ClientNetworkModule connection = new ClientNetworkModule();
+    private ClientNetworkModule messageConnection = new ClientNetworkModule();
+    private ClientNetworkModule drawingConnection = new ClientNetworkModule();
 
     public DrawingArea() {
-        // start connection
-        Thread t = new Thread(() -> {
-            connection.setIP("localhost");
-            connection.setPORT("3005");
-            connection.connect();
+        // start connection for messages and add new shape to server
+        Thread t1 = new Thread(() -> {
+            messageConnection.setIP("localhost");
+            messageConnection.setPORT("3005");
+            messageConnection.connect();
         });
-        t.start();
-//        connection.setIP("localhost");
-//        connection.setPORT("3005");
-//        connection.connect();
+        t1.start();
+
+        // start connection for receiving latest buffer image
+        Thread t2 = new Thread(() -> {
+            drawingConnection.setIP("localhost");
+            drawingConnection.setPORT("3006");
+            drawingConnection.connect();
+            while (true) {
+                bufferedImage = drawingConnection.receiveBufferImage();
+                repaint();
+            }
+        });
+        t2.start();
         startListeners();
     }
 
@@ -292,10 +302,8 @@ public class DrawingArea extends JPanel {
                 break;
         }
         // when mouse released, add new a shape to server
-        bufferedImage = connection.sendShapeAndGetImage(shape);
-        repaint();
+        messageConnection.sendShape(shape);
     }
-
 
     public void drawShape() {
         for (Shape shape : shapes) {
@@ -350,11 +358,5 @@ public class DrawingArea extends JPanel {
 
     public void setHeight(int height) {
         this.height = height;
-    }
-
-    public void addShape(Shape shape) {
-        System.out.println(shape.getType());
-        shapes.add(shape);
-        repaint();
     }
 }

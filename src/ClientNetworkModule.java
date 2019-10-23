@@ -1,5 +1,4 @@
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import shapes.Shape;
 
 import javax.imageio.ImageIO;
@@ -8,7 +7,6 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.Socket;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -95,20 +93,16 @@ public class ClientNetworkModule {
         return null;
     }
 
-    // add a new shape to server and get back a new buffer image to update
-    public BufferedImage sendShapeAndGetImage(Shape shape) {
+    // add a new shape to server
+    public String sendShape(Shape shape) {
         try {
             // convert username to json and send to server
             Gson gson = new Gson();
             output.writeUTF(gson.toJson(new Message("add_shape", "Shape.class", shape)));
             output.flush();
-
             // get back buffer image object
             Message message = gson.fromJson(input.readUTF(), Message.class);
-            BufferedImage bufferedImage = decodeToImage((String) message.getData());
-            System.out.println("get a buffer image to update");
-
-            return bufferedImage;
+            return (String) message.getData();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -131,4 +125,17 @@ public class ClientNetworkModule {
         return image;
     }
 
+    // receive buffer image from server
+    public BufferedImage receiveBufferImage() {
+        try {
+            Gson gson = new Gson();
+            // get back buffer image object
+            Message message = gson.fromJson(input.readUTF(), Message.class);
+            BufferedImage bufferedImage = decodeToImage((String) message.getData());
+            return bufferedImage;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
