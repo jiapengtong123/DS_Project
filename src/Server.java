@@ -27,6 +27,7 @@ public class Server {
     private List<Shape> shapes;
     private Graphics2D g2 = null;
     private BufferedImage bufferedImage = null;
+    private List<ClientUIInterface> clients = new ArrayList<>();
 
     Server() {
         try {
@@ -107,8 +108,10 @@ public class Server {
         if ("connect_user".equals(message.getOption())) {
             // generate an unique id and send back, data should be username
             String ID = generateID((String) message.getData());
+            ClientUIInterface ui = new ClientUI();
+            clients.add(ui);
             // bind a new stub name with id
-            registry.rebind(ID, new ClientUI());
+            registry.rebind(ID, ui);
             return new Message("", ID);
         }
 
@@ -127,6 +130,9 @@ public class Server {
             for (Shape shape : shapes) {
                 shape.draw(g2);
             }
+
+//            broadcast(new_shape);
+
             // send back new image buffer messages
             return new Message("", encodeToString(bufferedImage, "png"));
         }
@@ -134,8 +140,15 @@ public class Server {
     }
 
     // broadcast buffer image to all clients to update
-    public void broadcast() {
-
+    public void broadcast(Shape shape) {
+        for (ClientUIInterface client: clients){
+            try {
+                System.out.println(client);
+                client.addShape(shape);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     // encode buffer image to string to transfer by json

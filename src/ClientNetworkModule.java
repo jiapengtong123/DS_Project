@@ -51,6 +51,15 @@ public class ClientNetworkModule {
         }
     }
 
+    public void stop() {
+        try {
+            input.close();
+            output.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     // send our user name in a json format to server and get back a rmi name to use
     public String getRmiName(String username) {
         try {

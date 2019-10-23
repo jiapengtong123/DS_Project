@@ -50,9 +50,15 @@ public class DrawingArea extends JPanel {
 
     public DrawingArea() {
         // start connection
-        connection.setIP("localhost");
-        connection.setPORT("3005");
-        connection.connect();
+        Thread t = new Thread(() -> {
+            connection.setIP("localhost");
+            connection.setPORT("3005");
+            connection.connect();
+        });
+        t.start();
+//        connection.setIP("localhost");
+//        connection.setPORT("3005");
+//        connection.connect();
         startListeners();
     }
 
@@ -287,6 +293,7 @@ public class DrawingArea extends JPanel {
         }
         // when mouse released, add new a shape to server
         bufferedImage = connection.sendShapeAndGetImage(shape);
+        repaint();
     }
 
 
@@ -343,5 +350,11 @@ public class DrawingArea extends JPanel {
 
     public void setHeight(int height) {
         this.height = height;
+    }
+
+    public void addShape(Shape shape) {
+        System.out.println(shape.getType());
+        shapes.add(shape);
+        repaint();
     }
 }
