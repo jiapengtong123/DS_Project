@@ -4,5 +4,5 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 public interface ClientUIInterface extends Remote {
-    public void startUI() throws RemoteException;
+    public void startUI(String ip, String messagePort, String drawingPort) throws RemoteException;
 }

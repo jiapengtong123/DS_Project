@@ -13,6 +13,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Base64;
+import java.util.List;
 
 // handle connection to server and return a rmi object to client to use
 public class ClientNetworkModule {
@@ -94,11 +95,11 @@ public class ClientNetworkModule {
     }
 
     // add a new shape to server
-    public String sendShape(Shape shape) {
+    public String sendShape(List<Shape> shapes) {
         try {
             // convert username to json and send to server
             Gson gson = new Gson();
-            output.writeUTF(gson.toJson(new Message("add_shape", "Shape.class", shape)));
+            output.writeUTF(gson.toJson(new Message("add_shape", "", shapes)));
             output.flush();
             // get back buffer image object
             Message message = gson.fromJson(input.readUTF(), Message.class);

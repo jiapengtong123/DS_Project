@@ -18,7 +18,7 @@ public class Client extends Thread {
             ClientUIInterface UI = connection.getRmiObject(connection.getRmiName("Tom"));
             // start the whiteboard ui
             connection.stop();
-            UI.startUI();
+            UI.startUI("localhost", "3005", "3006");
             System.out.println("start ui");
         } catch (RemoteException e) {
             e.printStackTrace();

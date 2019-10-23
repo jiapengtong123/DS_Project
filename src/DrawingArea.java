@@ -15,9 +15,6 @@ import java.awt.event.FocusListener;
 import shapes.Shape;
 
 public class DrawingArea extends JPanel {
-    /**
-     *
-     */
     private static final long serialVersionUID = 1L;
     private int width = 100;
     private int height = 100;
@@ -32,36 +29,45 @@ public class DrawingArea extends JPanel {
     private float endPointX = 0;
     private float endPointY = 0;
     private List<Shape> shapes = new ArrayList<>();
+    private List<Shape> local_shapes = new ArrayList<>();
 
     // color and type
     private Color color = Color.BLACK;
     private BasicStroke stroke = (new BasicStroke(15f,
             BasicStroke.CAP_ROUND,
             BasicStroke.JOIN_ROUND));
-    private String type = "Select";
+    private String type = "Free_Draw";
+
     // shape instance to store current shape, used for real time drawing
     private Shape shape = null;
-    // reference Shapes
+
+    // eraser width and height
+    private int eraserWidth = 20;
+    private int eraserHeight = 20;
     private Shape eraserBorder = new Shape();
-    private Shape boundingBox = new Shape();
-    private Shape selectedShape = new Shape();
+    private int borderSize = 3;
+
+    // boolean to determine if drawing is over
+    private boolean drawingStart = false;
+    private boolean drawingOver = false;
+
     // connect with server to transfer shape and images
     private ClientNetworkModule messageConnection = new ClientNetworkModule();
     private ClientNetworkModule drawingConnection = new ClientNetworkModule();
 
-    public DrawingArea() {
+    public DrawingArea(String ip, String messagePort, String drawingPort) {
         // start connection for messages and add new shape to server
         Thread t1 = new Thread(() -> {
-            messageConnection.setIP("localhost");
-            messageConnection.setPORT("3005");
+            messageConnection.setIP(ip);
+            messageConnection.setPORT(messagePort);
             messageConnection.connect();
         });
         t1.start();
 
         // start connection for receiving latest buffer image
         Thread t2 = new Thread(() -> {
-            drawingConnection.setIP("localhost");
-            drawingConnection.setPORT("3006");
+            drawingConnection.setIP(ip);
+            drawingConnection.setPORT(drawingPort);
             drawingConnection.connect();
             while (true) {
                 bufferedImage = drawingConnection.receiveBufferImage();
@@ -79,13 +85,11 @@ public class DrawingArea extends JPanel {
                 mousePressedHandler(e);
             }
         });
-
         addMouseMotionListener(new MouseAdapter() {
             public void mouseDragged(MouseEvent e) {
                 mouseDraggedHandler(e);
             }
         });
-
         addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent e) {
                 mouseReleasedHandler(e);
@@ -128,40 +132,7 @@ public class DrawingArea extends JPanel {
 
     private void mousePressedHandler(MouseEvent e) {
         switch (type) {
-            case "Select":
-                // Iterate through shapelist in reverse so newer shapes are selected over older ones
-                for (int i = shapes.size() - 1; i >= -1; i--) {
-                    // -1 means no shapes were selected
-                    if (i == -1) {
-                        shapes.remove(boundingBox);
-                        if (selectedShape != null) {
-                            selectedShape.setSelected(false);
-                        }
-                        selectedShape = null;
-                        break;
-                    }
-
-                    Shape s = shapes.get(i);
-                    //If the clicked point is within shape boundaries, create bounding box, select shape
-                    if (s.getBounds().contains(e.getPoint()) && s != boundingBox && s.getType() != "Eraser" && s.getType() != "Free Draw") {
-                        s.setSelected(true);
-                        shapes.remove(boundingBox);
-                        boundingBox = new Shape(s.getX1(), s.getY1(), s.getX2(), s.getY2(),
-                                Color.RED);
-                        boundingBox.setType("Rectangle");
-                        selectedShape = s;
-                        shapes.remove(s);
-                        shapes.add(s);
-                        shapes.add(boundingBox);
-                        repaint();
-                        break;
-                    }
-                    repaint();
-                }
-                ;
-                break;
             case "Type":
-                shapes.remove(boundingBox);
                 setLayout(null);
                 final JTextField textField = new JTextField(20);
                 textField.setBorder(javax.swing.BorderFactory.createEmptyBorder());
@@ -190,36 +161,25 @@ public class DrawingArea extends JPanel {
                 repaint();
                 break;
             case "Eraser":
-                shapes.remove(boundingBox);
                 break;
             default:
-                shapes.remove(eraserBorder);
-                shapes.remove(boundingBox);
                 startPointX = e.getX();
                 startPointY = e.getY();
                 shape = new Shape((int) startPointX, (int) startPointY,
                         (int) startPointX, (int) startPointY, color);
                 shape.setType(type);
                 shape.setStroke(stroke);
+                shape.setStrokeSize(stroke.getLineWidth());
+                local_shapes.add(shape);
                 shapes.add(shape);
+                drawingStart = true;
                 break;
         }
     }
 
     private void mouseDraggedHandler(MouseEvent e) {
         switch (type) {
-            case "Select":
-                if (selectedShape != null) {
-                    endPointX = e.getX();
-                    endPointY = e.getY();
-                    selectedShape.setX2((int) endPointX);
-                    selectedShape.setY2((int) endPointY);
-                    boundingBox.setX2((int) endPointX);
-                    boundingBox.setY2((int) endPointY);
-                    repaint();
-                }
-                break;
-            case "Free Draw":
+            case "Free_Draw":
                 endPointX = e.getX();
                 endPointY = e.getY();
                 Shape temp = new Shape((int) startPointX, (int) startPointY,
@@ -228,46 +188,27 @@ public class DrawingArea extends JPanel {
                 temp.setStroke(stroke);
                 temp.setStrokeSize(stroke.getLineWidth());
                 shapes.add(temp);
+                local_shapes.add(temp);
                 startPointX = endPointX;
                 startPointY = endPointY;
                 repaint();
                 break;
             case "Eraser":
-                // draws a white stroke
-                endPointX = e.getX();
-                endPointY = e.getY();
-                temp = new Shape(e.getX(), e.getY(), (int) endPointX, (int) endPointY,
-                        BACKGROUND_COLOR);
-                temp.setType(type);
-                temp.setType(type);
-                temp.setStroke(stroke);
-                temp.setStrokeSize(stroke.getLineWidth());
-                shapes.add(temp);
-                startPointX = endPointX;
-                startPointY = endPointY;
-
-                shapes.remove(eraserBorder);
-                eraserBorder.setX1(e.getX());
-                eraserBorder.setY1(e.getY());
+                // set eraser border attributes
+                eraserBorder.setX1(e.getX() - (eraserWidth + borderSize) / 2);
+                eraserBorder.setY1(e.getY() - (eraserHeight + borderSize) / 2);
+                eraserBorder.setEraserWidth(eraserWidth + borderSize);
+                eraserBorder.setEraserHeight(eraserHeight + borderSize);
                 eraserBorder.setType("EraserBorder");
-                shapes.add(eraserBorder);
-                for (int i = shapes.size() - 1; i >= -1; i--) {
-                    if (i == -1) {
-                        break;
-                    }
-                    Shape s = shapes.get(i);
-                    //If the eraser shape intersects an object, erase it.
-                    if (s.getBounds().contains(e.getPoint()) && s != boundingBox) {
-                        shapes.remove(s);
-                        repaint();
-                        break;
-                    }
-                    repaint();
-                }
-                ;
-
+                eraserBorder.setStrokeSize(3);
+                local_shapes.remove(eraserBorder);
+                local_shapes.add(eraserBorder);
+                // create new white rectangles to cover old shapes
+                Shape eraser = new Shape(e.getX() - eraserWidth / 2, e.getY() - eraserHeight / 2,
+                        BACKGROUND_COLOR, eraserWidth, eraserHeight);
+                eraser.setType(type);
+                shapes.add(eraser);
                 repaint();
-
                 break;
             case "Type":
                 break;
@@ -283,8 +224,10 @@ public class DrawingArea extends JPanel {
     }
 
     private void mouseReleasedHandler(MouseEvent e) {
+        drawingOver = true;
+
         switch (type) {
-            case "Free Draw":
+            case "Free_Draw":
                 break;
             case "Line":
                 break;
@@ -295,18 +238,20 @@ public class DrawingArea extends JPanel {
             case "Oval":
                 break;
             case "Eraser":
-                shapes.remove(eraserBorder);
-                repaint();
-                break;
-            case "Select":
                 break;
         }
+
         // when mouse released, add new a shape to server
-        messageConnection.sendShape(shape);
+        if (drawingStart && drawingOver) {
+            messageConnection.sendShape(shapes);
+            shapes.clear();
+            drawingStart = false;
+            drawingOver = false;
+        }
     }
 
     public void drawShape() {
-        for (Shape shape : shapes) {
+        for (Shape shape : local_shapes) {
             shape.draw(g2);
         }
     }
@@ -348,15 +293,19 @@ public class DrawingArea extends JPanel {
         }
     }
 
-    public void addBg(BufferedImage bg) {
-        this.bufferedImage = bg;
+    public int getEraserWidth() {
+        return eraserWidth;
     }
 
-    public void setWidth(int width) {
-        this.width = width;
+    public void setEraserWidth(int eraserWidth) {
+        this.eraserWidth = eraserWidth;
     }
 
-    public void setHeight(int height) {
-        this.height = height;
+    public int getEraserHeight() {
+        return eraserHeight;
+    }
+
+    public void setEraserHeight(int eraserHeight) {
+        this.eraserHeight = eraserHeight;
     }
 }

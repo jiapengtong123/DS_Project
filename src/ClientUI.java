@@ -21,8 +21,7 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
     final static boolean shouldFill = true;
     final static boolean shouldWeightX = true;
     final static boolean RIGHT_TO_LEFT = false;
-    //    private Canvas canvas = null;
-    DrawingArea drawingArea = new DrawingArea();
+    DrawingArea drawingArea = null;
     // Color Chooser, stroke
     private ColorChooser chooser = null;
     private BasicStroke stroke = (new BasicStroke(15f,
@@ -34,13 +33,14 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
 //        ui.start();
 //    }
 
-    public void startUI() throws RemoteException {
-        ClientUI ui = new ClientUI();
+    public void startUI(String ip, String messagePort, String drawingPort) throws RemoteException {
+        ClientUI ui = new ClientUI(ip, messagePort, drawingPort);
         ui.start();
     }
 
-    public ClientUI() throws RemoteException {
+    public ClientUI(String ip, String messagePort, String drawingPort) throws RemoteException {
         super();
+        drawingArea = new DrawingArea(ip, messagePort, drawingPort);
         chooser = new ColorChooser();
     }
 
@@ -211,7 +211,7 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
         c.gridy = 11;
         c.gridheight = 1;
         pane.add(btnStroke, c);
-        
+
         JButton btnType = new JButton("Type text");
         c.fill = GridBagConstraints.HORIZONTAL;
         c.weightx = 0;
@@ -220,17 +220,6 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
         c.gridy = 12;
         c.gridheight = 1;
         pane.add(btnType, c);
-        
-        JButton btnSelect = new JButton("Select");
-        c.weightx = 0;
-        c.weighty = 0;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.gridx = 1;
-        c.gridy = 13;
-        c.gridheight = 1;
-        pane.add(btnSelect, c);
-        
-        
 
         // event listeners
         btnColorChooser.addActionListener(new ActionListener() {
@@ -242,7 +231,7 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
 
         btnFreeDraw.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
-                drawingArea.setType("Free Draw");
+                drawingArea.setType("Free_Draw");
             }
         });
 
@@ -278,43 +267,32 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
 
         btnEraserSmaller.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
-                int strokeWidth = (int)stroke.getLineWidth() - 1;
-                stroke = (new BasicStroke(strokeWidth,
-                        BasicStroke.CAP_ROUND,
-                        BasicStroke.JOIN_ROUND));
-                drawingArea.setStroke(stroke);
+                drawingArea.setEraserHeight(drawingArea.getEraserHeight() - 5);
+                drawingArea.setEraserWidth(drawingArea.getEraserWidth() - 5);
             }
         });
 
         btnEraserBigger.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent arg0) {
-                int strokeWidth = (int)stroke.getLineWidth() + 1;
-                stroke = (new BasicStroke(strokeWidth,
-                        BasicStroke.CAP_ROUND,
-                        BasicStroke.JOIN_ROUND));
-                drawingArea.setStroke(stroke);
+            public void actionPerformed(ActionEvent arg0) {
+                drawingArea.setEraserHeight(drawingArea.getEraserHeight() + 5);
+                drawingArea.setEraserWidth(drawingArea.getEraserWidth() + 5);
             }
         });
 
         btnStroke.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
                 String stroke = textField.getText();
-                drawingArea.setStroke(new BasicStroke(Float.parseFloat(stroke),BasicStroke.CAP_ROUND,
+                drawingArea.setStroke(new BasicStroke(Float.parseFloat(stroke), BasicStroke.CAP_ROUND,
                         BasicStroke.JOIN_ROUND));
             }
         });
-        
+
         btnType.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
                 drawingArea.setType("Type");
             }
         });
-        
-        btnSelect.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent arg0) {
-                drawingArea.setType("Select");
-            }
-        });
+
 
         // Menu event listeners
 //        newCanvas.addActionListener(new ActionListener() {
@@ -366,12 +344,12 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
                 chooser.showSaveDialog(null);
                 File file = chooser.getSelectedFile();
                 try {
-                	 
+
                     FileOutputStream fileOut = new FileOutputStream(file);
                     ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
                     objectOut.writeObject(drawingArea);
                     objectOut.close();
-         
+
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -383,22 +361,22 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
         saveAs.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JFileChooser chooser = new JFileChooser();
-                
-                FileNameExtensionFilter filter = new FileNameExtensionFilter("PNG","png");
-                FileNameExtensionFilter filter2 = new FileNameExtensionFilter("JPEG","jpg");
+
+                FileNameExtensionFilter filter = new FileNameExtensionFilter("PNG", "png");
+                FileNameExtensionFilter filter2 = new FileNameExtensionFilter("JPEG", "jpg");
                 chooser.setFileFilter(filter);
                 chooser.setFileFilter(filter2);
                 chooser.setAcceptAllFileFilterUsed(false);
-                
+
                 chooser.showSaveDialog(null);
                 String type = "png";
-                
+
                 // Set file extension type
                 if (chooser.getFileFilter() instanceof FileNameExtensionFilter) {
-                	String[] exts = ((FileNameExtensionFilter)chooser.getFileFilter()).getExtensions();
-                	type = exts[0];
+                    String[] exts = ((FileNameExtensionFilter) chooser.getFileFilter()).getExtensions();
+                    type = exts[0];
                 }
-                
+
                 drawingArea.saveImage(type, chooser.getSelectedFile());
             }
 

@@ -6,14 +6,10 @@ import javax.imageio.ImageIO;
 import javax.net.ServerSocketFactory;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -27,7 +23,8 @@ public class Server {
     private List<Shape> shapes;
     private Graphics2D g2 = null;
     private BufferedImage bufferedImage = null;
-    private List<ClientUIInterface> clients = new ArrayList<>();
+    private static String messagePort = "3005";
+    private static String drawingPort = "3006";
 
     Server() {
         try {
@@ -49,8 +46,8 @@ public class Server {
         try {
             // start socket port
             Server server = new Server();
-            Thread messageThread = new Thread(() -> server.messageStart("3005"));
-            Thread drawingThread = new Thread(() -> server.drawingStart("3006"));
+            Thread messageThread = new Thread(() -> server.messageStart(messagePort));
+            Thread drawingThread = new Thread(() -> server.drawingStart(drawingPort));
             // start thread for handle message and add new shapes
             messageThread.start();
             // start thread for sending buffer image to all clients
@@ -67,7 +64,7 @@ public class Server {
         ServerSocketFactory factory = ServerSocketFactory.getDefault();
 
         try (ServerSocket server = factory.createServerSocket(Integer.parseInt(port))) {
-            System.out.println("Waiting for client connection-");
+            System.out.println("Waiting for client message connection-");
 
             // Wait for connections.
             while (true) {
@@ -95,7 +92,7 @@ public class Server {
             while (!"stop".equals(option)) {
                 Message message = serverNetworkModule.getMessage();
                 option = message.getOption();
-                System.out.println("CLIENT " + " says: " + message.getData());
+//                System.out.println("CLIENT " + " says: " + message.getData());
                 serverNetworkModule.sendMessage(handleOptions(message));
             }
 
@@ -116,8 +113,8 @@ public class Server {
         if ("connect_user".equals(message.getOption())) {
             // generate an unique id and send back, data should be username
             String ID = generateID((String) message.getData());
-            ClientUIInterface ui = new ClientUI();
-            clients.add(ui);
+            ClientUIInterface ui = new ClientUI("localhost", messagePort, drawingPort);
+
             // bind a new stub name with id
             registry.rebind(ID, ui);
             return new Message("", ID);
@@ -125,15 +122,15 @@ public class Server {
 
         // add a new shape to the shape list, convert the canvas to image buffer and send back to client
         if ("add_shape".equals(message.getOption())) {
-            Type typeShapeType = new TypeToken<Shape>() {
+            Type typeShapeType = new TypeToken<List<Shape>>() {
             }.getType();
             Gson gson = new Gson();
-
-            System.out.println("add a new shape into white board.");
             // covert message to shape data
-            Shape new_shape = gson.fromJson(message.getData().toString(), typeShapeType);
+            ArrayList<Shape> new_shapes = gson.fromJson(message.getData().toString(), typeShapeType);
+
             // add new shape
-            shapes.add(new_shape);
+            shapes.addAll(new_shapes);
+
             // update graphic
             for (Shape shape : shapes) {
                 shape.draw(g2);
@@ -150,7 +147,7 @@ public class Server {
         ServerSocketFactory factory = ServerSocketFactory.getDefault();
 
         try (ServerSocket server = factory.createServerSocket(Integer.parseInt(port))) {
-            System.out.println("Waiting for client connection-");
+            System.out.println("Waiting for client drawing connection-");
             // Wait for connections.
             while (true) {
                 Socket client = server.accept();
