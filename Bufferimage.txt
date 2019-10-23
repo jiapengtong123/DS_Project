@@ -1,0 +1,11 @@
+// In the DrawingArea class, there is an object called
+//  private BufferedImage bufferedImage = null;
+
+// the image is draw by the code in drawing area as this
+            g2 = (Graphics2D) g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            AffineTransform aTran = new AffineTransform();
+            aTran.translate(0, 0);
+            g2.transform(aTran);
+            g2.drawImage(bufferedImage, aTran, this);
+// just use the bufferedImage object and the code above
