@@ -325,6 +325,15 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
         c.gridheight = 1;
         pane.add(btnKickOut, c);
 
+        JButton btnQuit = new JButton("Quit");
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 0;
+        c.weighty = 0;
+        c.gridx = 1;
+        c.gridy = 19;
+        c.gridheight = 1;
+        pane.add(btnQuit, c);
+
         // event listeners
         btnColorChooser.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
@@ -410,6 +419,14 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
             public void actionPerformed(ActionEvent e) {
                 if (drawingArea != null) {
                     drawingArea.getMessageConnection().sendKickOutUsername(ID, textFieldKickOut.getText().trim());
+                }
+            }
+        });
+
+        btnQuit.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (drawingArea != null) {
+                    drawingArea.getMessageConnection().stop(ID);
                 }
             }
         });

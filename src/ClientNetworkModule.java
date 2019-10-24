@@ -207,4 +207,16 @@ public class ClientNetworkModule {
         }
         return "fail";
     }
+
+    public String stop(String ID){
+        try {
+            Gson gson = new Gson();
+            output.writeUTF(gson.toJson(new Message(ID, "stop", "")));
+            output.flush();
+            return "success";
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "fail";
+    }
 }

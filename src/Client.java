@@ -15,7 +15,7 @@ public class Client extends Thread {
             connection.setPORT("3005");
             connection.connect();
             // server give a rmi stub name and use it to get the rmi object
-            ClientUIInterface UI = connection.getRmiObject(connection.getRmiName("Tom"));
+            ClientUIInterface UI = connection.getRmiObject(connection.getRmiName("Jerry"));
             // start the whiteboard ui
             connection.stop();
             UI.startUI("localhost", "3005", "3006");

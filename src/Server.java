@@ -106,14 +106,16 @@ public class Server {
             serverNetworkModule.setOutput(new DataOutputStream(clientSocket.getOutputStream()));
             // store option use to stop server thread
             String option = "";
+            Message message = new Message();
 
             while (!"stop".equals(option)) {
-                Message message = serverNetworkModule.getMessage();
+                message = serverNetworkModule.getMessage();
                 option = message.getOption();
 //                System.out.println("CLIENT " + " says: " + message.getData());
                 serverNetworkModule.sendMessage(handleOptions(message));
             }
 
+            stop(message.getID());
             serverNetworkModule.stopConnection();
         } catch (IOException e) {
             e.printStackTrace();
@@ -317,5 +319,16 @@ public class Server {
         if (userExist) {
             userList.remove(index);
         }
+    }
+
+    // user choose to stop, remove user from list
+    public void stop(String ID) {
+        int index = 0;
+        for (User user : userList) {
+            if (user.getID().equals(ID)) {
+                index = userList.indexOf(user);
+            }
+        }
+        userList.remove(index);
     }
 }
