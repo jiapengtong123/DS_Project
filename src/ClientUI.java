@@ -1,13 +1,13 @@
-import shapes.Shape;
-
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -15,72 +15,28 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
-import java.util.List;
 
-public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
+public class ClientUI extends clientrmi
+{
     final static boolean shouldFill = true;
     final static boolean shouldWeightX = true;
     final static boolean RIGHT_TO_LEFT = false;
-    DrawingArea drawingArea = null;
+    //    private Canvas canvas = null;
+    
+    
     // Color Chooser, stroke
     private ColorChooser chooser = null;
     private BasicStroke stroke = (new BasicStroke(15f,
             BasicStroke.CAP_ROUND,
             BasicStroke.JOIN_ROUND));
 
-    private String ID = null;
-    private String username = null;
-    private JTextArea textAreaChatMessages;
-    private JTextArea textAreaUserList;
-
-//    public static void main(String[] args) throws RemoteException {
-//        ClientUI ui = new ClientUI();
-//        ui.start();
-//    }
-
-    public void startUI(String ip, String messagePort, String drawingPort) throws RemoteException {
-        start();
+    public static void main(String[] args) throws RemoteException {
+        ClientUI ui = new ClientUI();
+        ui.start();
     }
 
-    public ClientUI(String ip, String messagePort, String drawingPort, String ID, String username) throws RemoteException {
-        super();
-        drawingArea = new DrawingArea(ip, messagePort, drawingPort, ID);
+    public ClientUI() {
         chooser = new ColorChooser();
-        this.ID = ID;
-        this.username = username;
-
-        // start connection for receiving chat messages and user list
-        Thread t = new Thread(() -> {
-            ClientNetworkModule module = new ClientNetworkModule();
-            module.setIP(ip);
-            module.setPORT(messagePort);
-            module.connect();
-
-            while (true) {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                // send ID and get back chat messages and user list
-                module.sendID(ID, "message_userlist");
-                List<ChatMessage> chatMessages = module.receiveMessagesList();
-                // reset message contents
-                textAreaChatMessages.setText("");
-                for (ChatMessage e : chatMessages) {
-                    textAreaChatMessages.append(e.getUsername() + ": " + e.getContent() + "\n");
-                }
-                // get all user names
-                module.sendID(ID, "user_list");
-                List<User> users = module.receiveUsersList();
-                textAreaUserList.setText("");
-                for (User user : users) {
-                    textAreaUserList.append(user.getUsername() + "\n");
-                }
-            }
-        });
-        t.start();
     }
 
     private void addComponentsToPane(Container pane) {
@@ -128,29 +84,20 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
         pane.add(menuBar, c);
 
         // Background for drawingArea
-//        JDesktopPane drawPanel = new JDesktopPane();
-//        drawPanel.setPreferredSize(new Dimension(800, 600));
-//        drawPanel.setBackground(Color.gray);
-//        drawPanel.setVisible(true);
-//        c.fill = GridBagConstraints.BOTH;
-//        c.weighty = 1;
-//        c.gridx = 0;
-//        c.gridy = 1;
-//        c.gridwidth = 1;
-//        c.gridheight = 15;
-//        pane.add(drawPanel, c);
-
-        // test create drawing area
-        drawingArea.setSize(600, 800);
-        drawingArea.setBackground(Color.white);
+        JDesktopPane drawPanel = new JDesktopPane();
+        drawPanel.setPreferredSize(new Dimension(800, 600));
+        drawPanel.setBackground(Color.gray);
+        drawPanel.setVisible(true);
         c.fill = GridBagConstraints.BOTH;
         c.weighty = 1;
         c.gridx = 0;
         c.gridy = 1;
         c.gridwidth = 1;
-        c.gridheight = 20;
-        pane.add(drawingArea, c);
+        c.gridheight = 15;
+        pane.add(drawPanel, c);
+        
 
+        
         JButton btnColorChooser = new JButton("Color Chooser");
         c.weightx = 0;
         c.weighty = 0;
@@ -250,7 +197,7 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
         c.gridy = 11;
         c.gridheight = 1;
         pane.add(btnStroke, c);
-
+        
         JButton btnType = new JButton("Type text");
         c.fill = GridBagConstraints.HORIZONTAL;
         c.weightx = 0;
@@ -259,71 +206,17 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
         c.gridy = 12;
         c.gridheight = 1;
         pane.add(btnType, c);
-
-        textAreaUserList = new JTextArea();
-        JScrollPane jsp_userlist = new JScrollPane(textAreaUserList);
-        c.insets = new Insets(0, 0, 5, 5);
+        
+        JButton btnSelect = new JButton("Select");
+        c.weightx = 0;
+        c.weighty = 0;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridx = 1;
         c.gridy = 13;
-        c.gridwidth = 1;
         c.gridheight = 1;
-        c.ipady = 100;
-        pane.add(jsp_userlist, c);
-
-        // add the textarea with a scroll panel
-        textAreaChatMessages = new JTextArea();
-        JScrollPane jsp = new JScrollPane(textAreaChatMessages);
-        c.insets = new Insets(0, 0, 5, 5);
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.gridx = 1;
-        c.gridy = 14;
-        c.gridwidth = 1;
-        c.gridheight = 1;
-        c.ipady = 100;
-        pane.add(jsp, c);
-
-        // text field used to input message
-        JTextField textFieldSend;
-        textFieldSend = new JTextField();
-        c.insets = new Insets(0, 0, 5, 5);
-        c.weightx = 0.0;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.gridx = 1;
-        c.gridy = 15;
-        c.gridwidth = 1;
-        c.ipady = 5;
-        pane.add(textFieldSend, c);
-
-        JButton btnSend = new JButton("Send");
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.weightx = 0;
-        c.weighty = 0;
-        c.gridx = 1;
-        c.gridy = 16;
-        c.gridheight = 1;
-        pane.add(btnSend, c);
-
-        // text field used to input message
-        JTextField textFieldKickOut;
-        textFieldKickOut = new JTextField();
-        c.insets = new Insets(0, 0, 5, 5);
-        c.weightx = 0.0;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.gridx = 1;
-        c.gridy = 17;
-        c.gridwidth = 1;
-        c.ipady = 5;
-        pane.add(textFieldKickOut, c);
-
-        JButton btnKickOut = new JButton("Kick Out");
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.weightx = 0;
-        c.weighty = 0;
-        c.gridx = 1;
-        c.gridy = 18;
-        c.gridheight = 1;
-        pane.add(btnKickOut, c);
+        pane.add(btnSelect, c);
+        
+        
 
         // event listeners
         btnColorChooser.addActionListener(new ActionListener() {
@@ -335,7 +228,7 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
 
         btnFreeDraw.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
-                drawingArea.setType("Free_Draw");
+                drawingArea.setType("Free Draw");
             }
         });
 
@@ -371,98 +264,103 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
 
         btnEraserSmaller.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
-                drawingArea.setEraserHeight(drawingArea.getEraserHeight() - 5);
-                drawingArea.setEraserWidth(drawingArea.getEraserWidth() - 5);
+                int strokeWidth = (int)stroke.getLineWidth() - 1;
+                stroke = (new BasicStroke(strokeWidth,
+                        BasicStroke.CAP_ROUND,
+                        BasicStroke.JOIN_ROUND));
+                drawingArea.setStroke(stroke);
             }
         });
 
         btnEraserBigger.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent arg0) {
-                drawingArea.setEraserHeight(drawingArea.getEraserHeight() + 5);
-                drawingArea.setEraserWidth(drawingArea.getEraserWidth() + 5);
+        	public void actionPerformed(ActionEvent arg0) {
+                int strokeWidth = (int)stroke.getLineWidth() + 1;
+                stroke = (new BasicStroke(strokeWidth,
+                        BasicStroke.CAP_ROUND,
+                        BasicStroke.JOIN_ROUND));
+                drawingArea.setStroke(stroke);
             }
         });
 
         btnStroke.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
                 String stroke = textField.getText();
-                drawingArea.setStroke(new BasicStroke(Float.parseFloat(stroke), BasicStroke.CAP_ROUND,
+                drawingArea.setStroke(new BasicStroke(Float.parseFloat(stroke),BasicStroke.CAP_ROUND,
                         BasicStroke.JOIN_ROUND));
             }
         });
-
+        
         btnType.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
                 drawingArea.setType("Type");
             }
         });
-
-        btnSend.addActionListener(new ActionListener() {
+        
+        btnSelect.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
-                if (drawingArea != null) {
-                    System.out.println(ID);
-                    drawingArea.getMessageConnection().sendChatMessage(ID, new ChatMessage(ID, username, textFieldSend.getText()));
-                }
+                drawingArea.setType("Select");
             }
         });
 
-
         // Menu event listeners
-//        newCanvas.addActionListener(new ActionListener() {
-//            public void actionPerformed(ActionEvent e) {
-//
-//
-//            	// Get new canvas dimensions
-//            	JPanel container = new JPanel();
-//            	JTextField canvasWidth = new JTextField(4);
-//            	JTextField canvasHeight = new JTextField(4);
-//            	JLabel canvasWarning = new JLabel("The current canvas will be replaced");
-//
-//            	if (drawingArea != null) {
-//            		container.setLayout(new GridLayout(0, 1, 2, 2));
-//            		container.add(canvasWarning);
-//            	}
-//
-//            	container.add(new JLabel("Width (px): "));
-//            	container.add(canvasWidth);
-//
-//            	container.add(new JLabel("Height (px): "));
-//            	container.add(canvasHeight);
-//
-//            	int option = JOptionPane.showConfirmDialog(drawPanel, container, "Please enter new canvas dimensions", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
-//
-//            	if (option == JOptionPane.YES_OPTION) {
-//            		if (drawingArea != null) {
-//            			drawingArea.setVisible(false);
-//            			drawPanel.remove(drawingArea);
-//            		}
-//	                drawingArea = new DrawingArea();
-//	                drawingArea.setSize(Integer.parseInt(canvasWidth.getText()), Integer.parseInt(canvasHeight.getText()));
-//	                drawingArea.setHeight(Integer.parseInt(canvasHeight.getText()));
-//	                drawingArea.setWidth(Integer.parseInt(canvasWidth.getText()));
-//	                drawingArea.setPreferredSize(drawingArea.getPreferredSize());
-//	                drawingArea.setBackground(Color.white);
-//	                drawingArea.setVisible(true);
-//	                c.fill = GridBagConstraints.BOTH;
-//	                drawPanel.add(drawingArea, c);
-//            	}
-//
-//            }
-//
-//        });
-
-        saveCanvas.addActionListener(new ActionListener() {
+        newCanvas.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+            	
+            	
+            	// Get new canvas dimensions
+            	JPanel container = new JPanel();
+            	JTextField canvasWidth = new JTextField(4);
+            	JTextField canvasHeight = new JTextField(4);
+            	JLabel canvasWarning = new JLabel("The current canvas will be replaced"); 
+            	
+            	if (drawingArea != null)
+            	{
+            		container.setLayout(new GridLayout(0, 1, 2, 2));
+            		container.add(canvasWarning);
+            	}
+            
+            	container.add(new JLabel("Width (px): "));
+            	container.add(canvasWidth);
+            	
+            	container.add(new JLabel("Height (px): "));
+            	container.add(canvasHeight);
+            	
+            	int option = JOptionPane.showConfirmDialog(drawPanel, container, "Please enter new canvas dimensions", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
+            	
+            	if (option == JOptionPane.YES_OPTION) {
+            		if (drawingArea != null) {
+            			drawingArea.setVisible(false);
+            			drawPanel.remove(drawingArea);
+            		}
+	                drawingArea = new DrawingArea();
+	                drawingArea.setSize(Integer.parseInt(canvasWidth.getText()), Integer.parseInt(canvasHeight.getText()));
+	                drawingArea.setHeight(Integer.parseInt(canvasHeight.getText()));
+	                drawingArea.setWidth(Integer.parseInt(canvasWidth.getText()));
+	                drawingArea.setPreferredSize(drawingArea.getPreferredSize());
+	                drawingArea.setBackground(Color.white);
+	                drawingArea.setVisible(true);
+	                c.fill = GridBagConstraints.BOTH;
+	                drawPanel.add(drawingArea, c);
+            	}
+
+            }
+
+        });
+
+        saveCanvas.addActionListener(new ActionListener()
+        {
+            public void actionPerformed(ActionEvent e)
+            {
                 JFileChooser chooser = new JFileChooser();
                 chooser.showSaveDialog(null);
                 File file = chooser.getSelectedFile();
                 try {
-
+                	 
                     FileOutputStream fileOut = new FileOutputStream(file);
                     ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
                     objectOut.writeObject(drawingArea);
                     objectOut.close();
-
+         
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -474,85 +372,87 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
         saveAs.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JFileChooser chooser = new JFileChooser();
-
-                FileNameExtensionFilter filter = new FileNameExtensionFilter("PNG", "png");
-                FileNameExtensionFilter filter2 = new FileNameExtensionFilter("JPEG", "jpg");
+                
+                FileNameExtensionFilter filter = new FileNameExtensionFilter("PNG","png");
+                FileNameExtensionFilter filter2 = new FileNameExtensionFilter("JPEG","jpg");
                 chooser.setFileFilter(filter);
                 chooser.setFileFilter(filter2);
                 chooser.setAcceptAllFileFilterUsed(false);
-
+                
                 chooser.showSaveDialog(null);
                 String type = "png";
-
+                
                 // Set file extension type
                 if (chooser.getFileFilter() instanceof FileNameExtensionFilter) {
-                    String[] exts = ((FileNameExtensionFilter) chooser.getFileFilter()).getExtensions();
-                    type = exts[0];
+                	String[] exts = ((FileNameExtensionFilter)chooser.getFileFilter()).getExtensions();
+                	type = exts[0];
                 }
-
+                
                 drawingArea.saveImage(type, chooser.getSelectedFile());
             }
 
         });
 
-//        openCanvas.addActionListener(new ActionListener() {
-//            public void actionPerformed(ActionEvent e) {
-//                JFileChooser chooser = new JFileChooser();
-//                chooser.showOpenDialog(null);
-//                File file = chooser.getSelectedFile();
-//                FileInputStream fi;
-//
-//				try {
-//					fi = new FileInputStream(file);
-//	    			ObjectInputStream oi = new ObjectInputStream(fi);
-//	    			if (drawingArea != null) {
-//            			drawingArea.setVisible(false);
-//            			drawPanel.remove(drawingArea);
-//            		}
-//
-//	    			drawingArea = (DrawingArea) oi.readObject();
-//	    			drawingArea.startListeners();
-//	    			oi.close();
-//
-//	    			drawingArea.setStroke(stroke);
-//	    			drawingArea.setVisible(true);
-//	    			drawingArea.setPreferredSize(drawingArea.getPreferredSize());
-//	                c.fill = GridBagConstraints.BOTH;
-//	                drawPanel.add(drawingArea, c);
-//
-//				} catch (FileNotFoundException e1) {
-//					e1.printStackTrace();
-//				} catch (IOException e1) {
-//					try {
-//						BufferedImage img = ImageIO.read(file);
-//						int width = img.getWidth();
-//						int height = img.getHeight();
-//						System.out.println(width + " " + height);
-//						if (drawingArea != null) {
-//	            			drawingArea.setVisible(false);
-//	            			drawPanel.remove(drawingArea);
-//	            		}
-//
-//		    			drawingArea = new DrawingArea();
-//		    			drawingArea.addBg(img);
-//		    			drawingArea.startListeners();
-//		    			drawingArea.setStroke(stroke);
-//		    			drawingArea.setVisible(true);
-//		    			drawingArea.setSize(width,height);
-//		                c.fill = GridBagConstraints.BOTH;
-//		                drawPanel.add(drawingArea, c);
-//
-//					} catch (IOException e2) {
-//						e1.printStackTrace();
-//					}
-//				} catch (ClassNotFoundException e1) {
-//					e1.printStackTrace();
-//				}
-//
-//
-//            }
-//
-//        });
+        openCanvas.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser chooser = new JFileChooser();
+                chooser.showOpenDialog(null);
+                File file = chooser.getSelectedFile();
+                FileInputStream fi;
+                
+				try {
+					fi = new FileInputStream(file);
+	    			ObjectInputStream oi = new ObjectInputStream(fi);
+	    			if (drawingArea != null) {
+            			drawingArea.setVisible(false);
+            			drawPanel.remove(drawingArea);
+            		}
+	    			
+	    			drawingArea = (DrawingArea) oi.readObject();
+	    			drawingArea.startListeners();
+	    			oi.close();
+	    			
+	    			drawingArea.setStroke(stroke);
+	    			drawingArea.setVisible(true);
+	    			drawingArea.setPreferredSize(drawingArea.getPreferredSize());
+	                c.fill = GridBagConstraints.BOTH;
+	                drawPanel.add(drawingArea, c);
+	                
+				}
+				catch (FileNotFoundException e1)
+				{
+					e1.printStackTrace();
+				} catch (IOException e1) {
+					try {
+						BufferedImage img = ImageIO.read(file);
+						int width = img.getWidth();
+						int height = img.getHeight();
+						System.out.println(width + " " + height);
+						if (drawingArea != null) {
+	            			drawingArea.setVisible(false);
+	            			drawPanel.remove(drawingArea);
+	            		}
+		    			
+		    			drawingArea = new DrawingArea();
+		    			drawingArea.addBg(img);
+		    			drawingArea.startListeners();
+		    			drawingArea.setStroke(stroke);
+		    			drawingArea.setVisible(true);
+		    			drawingArea.setSize(width,height);
+		                c.fill = GridBagConstraints.BOTH;
+		                drawPanel.add(drawingArea, c);
+		                
+					} catch (IOException e2) {
+						e1.printStackTrace();
+					}
+				} catch (ClassNotFoundException e1) {
+					e1.printStackTrace();
+				}
+				
+				
+            }
+
+        });
 
         closeProgram.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -561,10 +461,11 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
 
         });
     }
+    
 
     private void buildUI() {
         JFrame frame = new JFrame("White Board");
-//        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         addComponentsToPane(frame.getContentPane());
         frame.pack();

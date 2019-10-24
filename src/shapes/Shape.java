@@ -1,24 +1,40 @@
 package shapes;
 
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.io.Serializable;
 
-public class Shape implements Serializable {
-    private static final long serialVersionUID = 1L;
 
-    // basic information of the shape
+public class Shape implements Serializable
+{
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	// basic information of the shape
     transient private BasicStroke stroke;
     private Color color;
     private String type;
     private int x1, y1, x2, y2;
     private String text;
-    private float strokeSize = 3;
-    private int eraserWidth, eraserHeight;
+    private boolean selected = false;
+    private float strokeSize = 5;
 
-    public Shape() {
+    public float getStrokeSize()
+    {
+		return strokeSize;
+	}
+
+	public void setStrokeSize(float strokeSize)
+	{
+		this.strokeSize = strokeSize;
+	}
+
+	public Shape()
+	{
 
     }
-
+    
     // constructor for text
     public Shape(int x1, int y1, Color color) {
         this.x1 = x1;
@@ -35,24 +51,16 @@ public class Shape implements Serializable {
         this.color = color;
     }
 
-    // constructor for eraser
-    public Shape(int x1, int y1, Color color, int width, int height) {
-        this.x1 = x1;
-        this.y1 = y1;
-        this.color = color;
-        eraserWidth = width;
-        eraserHeight = height;
-    }
+    public void draw(Graphics2D g2)
+    {
 
-    public void draw(Graphics2D g2) {
-
-        if (stroke == null) {
-            stroke = new BasicStroke(strokeSize, BasicStroke.CAP_ROUND,
-                    BasicStroke.JOIN_ROUND);
+    	if(stroke == null) 
+    	{
+            stroke = new BasicStroke(strokeSize, BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND);
         }
         g2.setColor(color);
         switch (type) {
-            case "Free_Draw":
+            case "Free Draw":
                 g2.setStroke(stroke);
                 g2.drawLine(x1, y1, x2, y2);
                 break;
@@ -109,20 +117,79 @@ public class Shape implements Serializable {
                 }
                 break;
             case "Eraser":
-                g2.drawRect(x1, y1, eraserWidth, eraserHeight);
-                g2.fillRect(x1, y1, eraserWidth, eraserHeight);
+            	g2.setStroke(stroke);
+                g2.drawLine(x1, y1, x2, y2);
                 break;
             case "EraserBorder":
-                g2.setStroke(stroke);
                 g2.setColor(Color.BLACK);
-                g2.drawRect(x1, y1, eraserWidth, eraserHeight);
+                g2.drawOval(x1,y1,(int)stroke.getLineWidth(),(int)stroke.getLineWidth());
                 break;
             case "Type":
-                g2.drawString(getText(), x1, y1);
-                break;
+ 				g2.drawString(getText(), x1, y1);
+            	break;
         }
     }
 
+    // getters and setters
+    
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+    }
+    
+    public boolean isSelected() {
+        return selected;
+    }
+    
+    public Rectangle2D getBounds() {
+    	switch(type){
+		case"Rectangle":
+    		if (x1 > x2) {
+                if (y1 > y2) {
+                	return new Rectangle2D.Double(x2, y2, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                } else {
+                	return new Rectangle2D.Double(x2, y1, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                }
+            } else {
+                if (y1 < y2) {
+                	return new Rectangle2D.Double(x1, y1, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                } else {
+                	return new Rectangle2D.Double(x1, y2, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                }
+            }
+    	case "Oval":
+    		if (x1 > x2) {
+	    		if (y1 > y2) {
+	    			return new Rectangle2D.Double(x2, y2, Math.abs(x2 - x1), Math.abs(y2 - y1));
+	            } else {
+	            	return new Rectangle2D.Double(x2, y1, Math.abs(x2 - x1), Math.abs(y2 - y1));
+	            }
+    		}else {
+                if (y1 < y2) {
+                	return new Rectangle2D.Double(x1, y1, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                } else {
+                	return new Rectangle2D.Double(x1, y2, Math.abs(x2 - x1), Math.abs(y2 - y1));
+                }
+            }
+    	case "Circle":
+    		if (x1 > x2) {
+                if (y1 > y2) {
+                	return new Rectangle2D.Double(x2, y2, Math.abs(x2 - x1), Math.abs(x2 - x1));
+                } else {
+                	return new Rectangle2D.Double(x2, y1, Math.abs(x2 - x1), Math.abs(x2 - x1));
+                }
+            } else {
+                if (y1 < y2) {
+                	return new Rectangle2D.Double(x1, y1, Math.abs(x2 - x1), Math.abs(x2 - x1));
+                } else {
+                	return new Rectangle2D.Double(x1, y2, Math.abs(x2 - x1), Math.abs(x2 - x1));
+                }
+            }
+    	default:
+    		return new Rectangle2D.Double(0,0,0,0);
+    	}
+    	
+    }
+    
     public Stroke getStroke() {
         return stroke;
     }
@@ -179,35 +246,11 @@ public class Shape implements Serializable {
         this.y2 = y2;
     }
 
-    public String getText() {
-        return text;
-    }
+	public String getText() {
+		return text;
+	}
 
-    public void setText(String text) {
-        this.text = text;
-    }
-
-    public float getStrokeSize() {
-        return strokeSize;
-    }
-
-    public void setStrokeSize(float strokeSize) {
-        this.strokeSize = strokeSize;
-    }
-
-    public int getEraserWidth() {
-        return eraserWidth;
-    }
-
-    public void setEraserWidth(int eraserWidth) {
-        this.eraserWidth = eraserWidth;
-    }
-
-    public int getEraserHeight() {
-        return eraserHeight;
-    }
-
-    public void setEraserHeight(int eraserHeight) {
-        this.eraserHeight = eraserHeight;
-    }
+	public void setText(String text) {
+		this.text = text;
+	}
 }
