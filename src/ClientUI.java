@@ -31,6 +31,7 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
 
     private String ID = null;
     private String username = null;
+    private String role = null;
     private JTextArea textAreaChatMessages;
     private JTextArea textAreaUserList;
 
@@ -43,12 +44,13 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
         start();
     }
 
-    public ClientUI(String ip, String messagePort, String drawingPort, String ID, String username) throws RemoteException {
+    public ClientUI(String ip, String messagePort, String drawingPort, String ID, String username, String role) throws RemoteException {
         super();
         drawingArea = new DrawingArea(ip, messagePort, drawingPort, ID);
         chooser = new ColorChooser();
         this.ID = ID;
         this.username = username;
+        this.role = role;
 
         // start connection for receiving chat messages and user list
         Thread t = new Thread(() -> {
@@ -69,7 +71,8 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
                 // reset message contents
                 textAreaChatMessages.setText("");
                 for (ChatMessage e : chatMessages) {
-                    textAreaChatMessages.append(e.getUsername() + ": " + e.getContent() + "\n");
+                    textAreaChatMessages.append(e.getUsername() + ": " +
+                            String.join(" ", e.getContent().split("_")) + "\n");
                 }
                 // get all user names
                 module.sendID(ID, "user_list");
@@ -103,17 +106,20 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
 
         // Drop down menu items
         JMenuItem newCanvas, saveCanvas, saveAs, openCanvas, closeProgram;
-        newCanvas = new JMenuItem("New Canvas");
-        saveCanvas = new JMenuItem("Save Canvas");
+//        newCanvas = new JMenuItem("New Canvas");
+//        saveCanvas = new JMenuItem("Save Canvas");
         saveAs = new JMenuItem("Save As");
         openCanvas = new JMenuItem("Open Canvas");
         closeProgram = new JMenuItem("Close Program");
 
         // Add items to File menu
-        fileMenu.add(newCanvas);
-        fileMenu.add(saveCanvas);
+//        fileMenu.add(newCanvas);
+//        fileMenu.add(saveCanvas);
         fileMenu.add(saveAs);
-        fileMenu.add(openCanvas);
+        // if is a manager show open option
+        if ("manager".equals(role)) {
+            fileMenu.add(openCanvas);
+        }
         fileMenu.add(closeProgram);
 
         // Add File menu to menu bar
@@ -410,7 +416,8 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
             public void actionPerformed(ActionEvent arg0) {
                 if (drawingArea != null) {
                     System.out.println(ID);
-                    drawingArea.getMessageConnection().sendChatMessage(ID, new ChatMessage(ID, username, textFieldSend.getText()));
+                    drawingArea.getMessageConnection().sendChatMessage(ID, new ChatMessage(ID, username,
+                            String.join("_", textFieldSend.getText().trim().split(" "))));
                 }
             }
         });
@@ -418,7 +425,8 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
         btnKickOut.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if (drawingArea != null) {
-                    drawingArea.getMessageConnection().sendKickOutUsername(ID, textFieldKickOut.getText().trim());
+                    drawingArea.getMessageConnection().sendKickOutUsername(ID,
+                            String.join("_", textFieldKickOut.getText().trim().split(" ")));
                 }
             }
         });
@@ -476,25 +484,25 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
 //
 //        });
 
-        saveCanvas.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser chooser = new JFileChooser();
-                chooser.showSaveDialog(null);
-                File file = chooser.getSelectedFile();
-                try {
-
-                    FileOutputStream fileOut = new FileOutputStream(file);
-                    ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
-                    objectOut.writeObject(drawingArea);
-                    objectOut.close();
-
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-
-            }
-
-        });
+//        saveCanvas.addActionListener(new ActionListener() {
+//            public void actionPerformed(ActionEvent e) {
+//                JFileChooser chooser = new JFileChooser();
+//                chooser.showSaveDialog(null);
+//                File file = chooser.getSelectedFile();
+//                try {
+//
+//                    FileOutputStream fileOut = new FileOutputStream(file);
+//                    ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
+//                    objectOut.writeObject(drawingArea);
+//                    objectOut.close();
+//
+//                } catch (Exception ex) {
+//                    ex.printStackTrace();
+//                }
+//
+//            }
+//
+//        });
 
         saveAs.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -520,13 +528,34 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
 
         });
 
-//        openCanvas.addActionListener(new ActionListener() {
-//            public void actionPerformed(ActionEvent e) {
-//                JFileChooser chooser = new JFileChooser();
-//                chooser.showOpenDialog(null);
-//                File file = chooser.getSelectedFile();
-//                FileInputStream fi;
-//
+        openCanvas.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser chooser = new JFileChooser();
+                chooser.showOpenDialog(null);
+                File file = chooser.getSelectedFile();
+                FileInputStream fi;
+
+                try {
+                    BufferedImage img = ImageIO.read(file);
+                    int width = img.getWidth();
+                    int height = img.getHeight();
+                    System.out.println(width + " " + height);
+
+//                    drawingArea.setBufferedImage(img);
+//                    drawingArea.startListeners();
+//                    drawingArea.setStroke(stroke);
+//                    drawingArea.setVisible(true);
+//                    drawingArea.setSize(width, height);
+//                    c.fill = GridBagConstraints.BOTH;
+
+                    // reset server image
+                    drawingArea.clearShapes();
+                    drawingArea.getMessageConnection().openCanvas(ID, img);
+
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
 //				try {
 //					fi = new FileInputStream(file);
 //	    			ObjectInputStream oi = new ObjectInputStream(fi);
@@ -573,17 +602,16 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
 //				} catch (ClassNotFoundException e1) {
 //					e1.printStackTrace();
 //				}
-//
-//
-//            }
-//
-//        });
+
+
+            }
+
+        });
 
         closeProgram.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 System.exit(0);
             }
-
         });
     }
 

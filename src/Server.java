@@ -133,14 +133,18 @@ public class Server {
         if ("connect_user".equals(message.getOption())) {
             // generate an unique id and send back, data should be username
             String ID = generateID((String) message.getData());
-            ClientUIInterface ui = new ClientUI("localhost", messagePort, drawingPort, ID, (String) message.getData());
+            String role = "normal";
 
             // add new user into user list and set role
             if (userList.size() == 0) {
-                userList.add(new User(ID, (String) message.getData(), "manager", false));
+                role = "manager";
+                userList.add(new User(ID, (String) message.getData(), role, false));
             } else {
-                userList.add(new User(ID, (String) message.getData(), "normal", false));
+                role = "normal";
+                userList.add(new User(ID, (String) message.getData(), role, false));
             }
+
+            ClientUIInterface ui = new ClientUI("localhost", messagePort, drawingPort, ID, (String) message.getData(), role);
 
             // bind a new stub name with id
             registry.rebind(ID, ui);
@@ -224,6 +228,11 @@ public class Server {
                     kickOutUser(kickout_username, "");
                 }
             }
+        }
+        // reset buffer image to the manager's image
+        if ("open_canvas".equals(message.getOption())) {
+            BufferedImage bufferedImage = decodeToImage((String) message.getData());
+            openCanvas(bufferedImage);
         }
         return null;
     }
@@ -330,5 +339,27 @@ public class Server {
             }
         }
         userList.remove(index);
+    }
+
+    public void openCanvas(BufferedImage bufferedImage) {
+        shapes.clear();
+        g2 = bufferedImage.createGraphics();
+        this.bufferedImage = bufferedImage;
+    }
+
+    // decode image string to a buffer image
+    public static BufferedImage decodeToImage(String imageString) {
+        BufferedImage image = null;
+        byte[] imageByte;
+        try {
+            Base64.Decoder decoder = Base64.getDecoder();
+            imageByte = decoder.decode(imageString);
+            ByteArrayInputStream bis = new ByteArrayInputStream(imageByte);
+            image = ImageIO.read(bis);
+            bis.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return image;
     }
 }

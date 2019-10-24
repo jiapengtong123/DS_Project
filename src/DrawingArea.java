@@ -16,8 +16,8 @@ import shapes.Shape;
 
 public class DrawingArea extends JPanel {
     private static final long serialVersionUID = 1L;
-    private int width = 100;
-    private int height = 100;
+    private int width = 600;
+    private int height = 800;
 
     private Graphics2D g2 = null;
     private BufferedImage bufferedImage = null;
@@ -291,6 +291,10 @@ public class DrawingArea extends JPanel {
         this.stroke = stroke;
     }
 
+    public void clearShapes(){
+        shapes.clear();
+    }
+
     // Save the canvas as an image file
     public void saveImage(String type, File file) {
         System.out.println(width + " " + height);
@@ -334,5 +338,9 @@ public class DrawingArea extends JPanel {
 
     public void setMessageConnection(ClientNetworkModule messageConnection) {
         this.messageConnection = messageConnection;
+    }
+
+    public void setBufferedImage(BufferedImage bufferedImage) {
+        this.bufferedImage = bufferedImage;
     }
 }
