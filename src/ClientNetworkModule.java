@@ -195,4 +195,16 @@ public class ClientNetworkModule {
         }
         return null;
     }
+
+    public String sendKickOutUsername(String ID, String kickout_username) {
+        try {
+            Gson gson = new Gson();
+            output.writeUTF(gson.toJson(new Message(ID, "kick_out", kickout_username)));
+            output.flush();
+            return "success";
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "fail";
+    }
 }

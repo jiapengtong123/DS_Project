@@ -196,7 +196,6 @@ public class Server {
             // user ID in list
             for (User user : userList) {
                 if (user.getID().equals(message.getID())) {
-                    System.out.println("user is in the list");
                     chatMessages.add(gson.fromJson(message.getData().toString(), type));
                 }
             }
@@ -305,14 +304,18 @@ public class Server {
 
     // kick out a user from the list
     public void kickOutUser(String username, String id) {
+        boolean userExist = false;
         int index = 0;
 
         for (User user : userList) {
-            if (user.getID().equals(id) && user.getUsername().equals(username)) {
+            if (user.getUsername().equals(username)) {
+                userExist = true;
                 index = userList.indexOf(user);
             }
         }
 
-        userList.remove(index);
+        if (userExist) {
+            userList.remove(index);
+        }
     }
 }

@@ -406,6 +406,14 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
             }
         });
 
+        btnKickOut.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (drawingArea != null) {
+                    drawingArea.getMessageConnection().sendKickOutUsername(ID, textFieldKickOut.getText().trim());
+                }
+            }
+        });
+
 
         // Menu event listeners
 //        newCanvas.addActionListener(new ActionListener() {
