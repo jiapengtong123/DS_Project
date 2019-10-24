@@ -252,10 +252,6 @@ public class DrawingArea extends JPanel {
                 break;
         }
 
-        for (Shape shape : shapes) {
-            System.out.println(shape.getType());
-        }
-
         // when mouse released, add new a shape to server
         if (drawingStart && drawingOver) {
             messageConnection.sendShape(ID, shapes);
@@ -292,7 +288,7 @@ public class DrawingArea extends JPanel {
     }
 
     public void clearShapes(){
-        shapes.clear();
+        local_shapes.clear();
     }
 
     // Save the canvas as an image file
