@@ -66,10 +66,17 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
                 // send ID and get back chat messages and user list
                 module.sendID(ID, "message_userlist");
                 List<ChatMessage> chatMessages = module.receiveMessagesList();
-                // set message contents
+                // reset message contents
                 textAreaChatMessages.setText("");
                 for (ChatMessage e : chatMessages) {
                     textAreaChatMessages.append(e.getUsername() + ": " + e.getContent() + "\n");
+                }
+                // get all user names
+                module.sendID(ID, "user_list");
+                List<User> users = module.receiveUsersList();
+                textAreaUserList.setText("");
+                for (User user : users) {
+                    textAreaUserList.append(user.getUsername() + "\n");
                 }
             }
         });
@@ -393,7 +400,8 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
         btnSend.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
                 if (drawingArea != null) {
-                    drawingArea.getMessageConnection().sendChatMessage(new ChatMessage(ID, username, textFieldSend.getText()));
+                    System.out.println(ID);
+                    drawingArea.getMessageConnection().sendChatMessage(ID, new ChatMessage(ID, username, textFieldSend.getText()));
                 }
             }
         });

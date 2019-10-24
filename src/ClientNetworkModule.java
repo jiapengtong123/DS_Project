@@ -169,15 +169,30 @@ public class ClientNetworkModule {
         return null;
     }
 
-    public String sendChatMessage(ChatMessage chatMessage) {
+    public String sendChatMessage(String ID, ChatMessage chatMessage) {
         try {
             Gson gson = new Gson();
-            output.writeUTF(gson.toJson(new Message("chat_message", chatMessage)));
+            output.writeUTF(gson.toJson(new Message(ID, "chat_message", chatMessage)));
             output.flush();
             return "success";
         } catch (IOException e) {
             e.printStackTrace();
         }
         return "fail";
+    }
+
+    public List<User> receiveUsersList() {
+        Type type = new TypeToken<List<User>>() {
+        }.getType();
+        try {
+            Gson gson = new Gson();
+            Message message = gson.fromJson(input.readUTF(), Message.class);
+            List<User> users = gson.fromJson(message.getData().toString(), type);
+
+            return users;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

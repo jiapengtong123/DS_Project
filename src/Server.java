@@ -157,30 +157,72 @@ public class Server {
 //                System.out.println(shape.getType());
 //            }
 
-            // add new shape
-            shapes.addAll(new_shapes);
+            // if user in the list
+            for (User user : userList) {
+                if (user.getID().equals(message.getID())) {
+                    // add new shape
+                    shapes.addAll(new_shapes);
+                    // update graphic
+                    for (Shape shape : shapes) {
+                        shape.draw(g2);
+                    }
+                    // send back new image buffer messages
+                    return new Message("", "success");
 
-            // update graphic
-            for (Shape shape : shapes) {
-                shape.draw(g2);
+                }
             }
 
-//            isUpdated = true;
-//            bufferedImage.notifyAll();
-
-            // send back new image buffer messages
-            return new Message("", "success");
+            return new Message("", "fail");
         }
 
+        // return the message list
         if ("message_userlist".equals(message.getOption())) {
-            return new Message("", chatMessages);
+//            System.out.println(message.getID());
+            // user in the list can receive the messages
+            for (User user : userList) {
+                if (user.getID().equals(message.getID())) {
+                    return new Message("", chatMessages);
+                }
+            }
+            // user not in the list will receive an empty message
+            return new Message("", new ArrayList<ChatMessage>());
         }
 
+        // if user in the list, add his message
         if ("chat_message".equals(message.getOption())) {
             Type type = new TypeToken<ChatMessage>() {
             }.getType();
             Gson gson = new Gson();
-            chatMessages.add(gson.fromJson(message.getData().toString(), type));
+            // user ID in list
+            for (User user : userList) {
+                if (user.getID().equals(message.getID())) {
+                    System.out.println("user is in the list");
+                    chatMessages.add(gson.fromJson(message.getData().toString(), type));
+                }
+            }
+        }
+
+        // if user in the list, return all users in the room
+        if ("user_list".equals(message.getOption())) {
+            // user in the list can receive the messages
+            for (User user : userList) {
+                if (user.getID().equals(message.getID())) {
+                    return new Message("", userList);
+                }
+            }
+            // user not in the list will receive an empty message
+            return new Message("", new ArrayList<User>());
+        }
+
+        // if a manager want to kickout a user
+        if ("kick_out".equals(message.getOption())) {
+            Gson gson = new Gson();
+            for (User user : userList) {
+                if (user.getID().equals(message.getID()) && user.getRole().equals("manager")) {
+                    String kickout_username = gson.fromJson(message.getData().toString(), String.class);
+                    kickOutUser(kickout_username, "");
+                }
+            }
         }
         return null;
     }
@@ -259,5 +301,18 @@ public class Server {
             e.printStackTrace();
         }
         return imageString;
+    }
+
+    // kick out a user from the list
+    public void kickOutUser(String username, String id) {
+        int index = 0;
+
+        for (User user : userList) {
+            if (user.getID().equals(id) && user.getUsername().equals(username)) {
+                index = userList.indexOf(user);
+            }
+        }
+
+        userList.remove(index);
     }
 }
