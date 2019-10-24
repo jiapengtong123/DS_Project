@@ -6,7 +6,7 @@
 public class Message {
     private String option;
     private Object data;
-    private String classname;
+    private String ID;
 
     public Message() {
 
@@ -17,10 +17,10 @@ public class Message {
         this.data = data;
     }
 
-    public Message(String option, String classname, Object data) {
+    public Message(String ID, String option, Object data) {
+        this.ID = ID;
         this.option = option;
         this.data = data;
-        this.classname = classname;
     }
 
     public String getOption() {
@@ -39,11 +39,11 @@ public class Message {
         this.data = data;
     }
 
-    public String getClassname() {
-        return classname;
+    public String getID() {
+        return ID;
     }
 
-    public void setClassname(String classname) {
-        this.classname = classname;
+    public void setID(String ID) {
+        this.ID = ID;
     }
 }

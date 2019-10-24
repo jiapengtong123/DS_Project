@@ -12,7 +12,7 @@ public class Shape implements Serializable {
     private String type;
     private int x1, y1, x2, y2;
     private String text;
-    private float strokeSize = 5;
+    private float strokeSize = 3;
     private int eraserWidth, eraserHeight;
 
     public Shape() {
@@ -109,7 +109,6 @@ public class Shape implements Serializable {
                 }
                 break;
             case "Eraser":
-                g2.setStroke(stroke);
                 g2.drawRect(x1, y1, eraserWidth, eraserHeight);
                 g2.fillRect(x1, y1, eraserWidth, eraserHeight);
                 break;

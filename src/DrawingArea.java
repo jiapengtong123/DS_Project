@@ -33,7 +33,7 @@ public class DrawingArea extends JPanel {
 
     // color and type
     private Color color = Color.BLACK;
-    private BasicStroke stroke = (new BasicStroke(15f,
+    private BasicStroke stroke = (new BasicStroke(5f,
             BasicStroke.CAP_ROUND,
             BasicStroke.JOIN_ROUND));
     private String type = "Free_Draw";
@@ -54,8 +54,12 @@ public class DrawingArea extends JPanel {
     // connect with server to transfer shape and images
     private ClientNetworkModule messageConnection = new ClientNetworkModule();
     private ClientNetworkModule drawingConnection = new ClientNetworkModule();
+    private String ID = null;
 
-    public DrawingArea(String ip, String messagePort, String drawingPort) {
+    public DrawingArea(String ip, String messagePort, String drawingPort, String ID) {
+
+        this.ID = ID;
+        System.out.println("id is" + this.ID);
         // start connection for messages and add new shape to server
         Thread t1 = new Thread(() -> {
             messageConnection.setIP(ip);
@@ -70,6 +74,8 @@ public class DrawingArea extends JPanel {
             drawingConnection.setPORT(drawingPort);
             drawingConnection.connect();
             while (true) {
+                // send ID to server and get back image
+                drawingConnection.sendID(ID, "bufferImage");
                 bufferedImage = drawingConnection.receiveBufferImage();
                 repaint();
             }
@@ -133,6 +139,7 @@ public class DrawingArea extends JPanel {
     private void mousePressedHandler(MouseEvent e) {
         switch (type) {
             case "Type":
+//                drawingStart = true;
                 setLayout(null);
                 final JTextField textField = new JTextField(20);
                 textField.setBorder(javax.swing.BorderFactory.createEmptyBorder());
@@ -161,8 +168,10 @@ public class DrawingArea extends JPanel {
                 repaint();
                 break;
             case "Eraser":
+//                drawingStart = true;
                 break;
             default:
+//                drawingStart = true;
                 startPointX = e.getX();
                 startPointY = e.getY();
                 shape = new Shape((int) startPointX, (int) startPointY,
@@ -172,7 +181,6 @@ public class DrawingArea extends JPanel {
                 shape.setStrokeSize(stroke.getLineWidth());
                 local_shapes.add(shape);
                 shapes.add(shape);
-                drawingStart = true;
                 break;
         }
     }
@@ -205,7 +213,7 @@ public class DrawingArea extends JPanel {
                 local_shapes.add(eraserBorder);
                 // create new white rectangles to cover old shapes
                 Shape eraser = new Shape(e.getX() - eraserWidth / 2, e.getY() - eraserHeight / 2,
-                        BACKGROUND_COLOR, eraserWidth, eraserHeight);
+                        Color.WHITE, eraserWidth, eraserHeight);
                 eraser.setType(type);
                 shapes.add(eraser);
                 repaint();
@@ -221,6 +229,7 @@ public class DrawingArea extends JPanel {
                 repaint();
                 break;
         }
+        drawingStart = true;
     }
 
     private void mouseReleasedHandler(MouseEvent e) {
@@ -239,11 +248,17 @@ public class DrawingArea extends JPanel {
                 break;
             case "Eraser":
                 break;
+            case "Type":
+                break;
+        }
+
+        for (Shape shape : shapes) {
+            System.out.println(shape.getType());
         }
 
         // when mouse released, add new a shape to server
         if (drawingStart && drawingOver) {
-            messageConnection.sendShape(shapes);
+            messageConnection.sendShape(ID, shapes);
             shapes.clear();
             drawingStart = false;
             drawingOver = false;
@@ -307,5 +322,17 @@ public class DrawingArea extends JPanel {
 
     public void setEraserHeight(int eraserHeight) {
         this.eraserHeight = eraserHeight;
+    }
+
+    public static long getSerialVersionUID() {
+        return serialVersionUID;
+    }
+
+    public ClientNetworkModule getMessageConnection() {
+        return messageConnection;
+    }
+
+    public void setMessageConnection(ClientNetworkModule messageConnection) {
+        this.messageConnection = messageConnection;
     }
 }

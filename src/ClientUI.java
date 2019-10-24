@@ -16,6 +16,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.List;
 
 public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
     final static boolean shouldFill = true;
@@ -28,20 +29,51 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
             BasicStroke.CAP_ROUND,
             BasicStroke.JOIN_ROUND));
 
+    private String ID = null;
+    private String username = null;
+    private JTextArea textAreaChatMessages;
+    private JTextArea textAreaUserList;
+
 //    public static void main(String[] args) throws RemoteException {
 //        ClientUI ui = new ClientUI();
 //        ui.start();
 //    }
 
     public void startUI(String ip, String messagePort, String drawingPort) throws RemoteException {
-        ClientUI ui = new ClientUI(ip, messagePort, drawingPort);
-        ui.start();
+        start();
     }
 
-    public ClientUI(String ip, String messagePort, String drawingPort) throws RemoteException {
+    public ClientUI(String ip, String messagePort, String drawingPort, String ID, String username) throws RemoteException {
         super();
-        drawingArea = new DrawingArea(ip, messagePort, drawingPort);
+        drawingArea = new DrawingArea(ip, messagePort, drawingPort, ID);
         chooser = new ColorChooser();
+        this.ID = ID;
+        this.username = username;
+
+        // start connection for receiving chat messages and user list
+        Thread t = new Thread(() -> {
+            ClientNetworkModule module = new ClientNetworkModule();
+            module.setIP(ip);
+            module.setPORT(messagePort);
+            module.connect();
+
+            while (true) {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                // send ID and get back chat messages and user list
+                module.sendID(ID, "message_userlist");
+                List<ChatMessage> chatMessages = module.receiveMessagesList();
+                // set message contents
+                textAreaChatMessages.setText("");
+                for (ChatMessage e : chatMessages) {
+                    textAreaChatMessages.append(e.getUsername() + ": " + e.getContent() + "\n");
+                }
+            }
+        });
+        t.start();
     }
 
     private void addComponentsToPane(Container pane) {
@@ -109,7 +141,7 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
         c.gridx = 0;
         c.gridy = 1;
         c.gridwidth = 1;
-        c.gridheight = 15;
+        c.gridheight = 20;
         pane.add(drawingArea, c);
 
         JButton btnColorChooser = new JButton("Color Chooser");
@@ -221,6 +253,71 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
         c.gridheight = 1;
         pane.add(btnType, c);
 
+        textAreaUserList = new JTextArea();
+        JScrollPane jsp_userlist = new JScrollPane(textAreaUserList);
+        c.insets = new Insets(0, 0, 5, 5);
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 1;
+        c.gridy = 13;
+        c.gridwidth = 1;
+        c.gridheight = 1;
+        c.ipady = 100;
+        pane.add(jsp_userlist, c);
+
+        // add the textarea with a scroll panel
+        textAreaChatMessages = new JTextArea();
+        JScrollPane jsp = new JScrollPane(textAreaChatMessages);
+        c.insets = new Insets(0, 0, 5, 5);
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 1;
+        c.gridy = 14;
+        c.gridwidth = 1;
+        c.gridheight = 1;
+        c.ipady = 100;
+        pane.add(jsp, c);
+
+        // text field used to input message
+        JTextField textFieldSend;
+        textFieldSend = new JTextField();
+        c.insets = new Insets(0, 0, 5, 5);
+        c.weightx = 0.0;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 1;
+        c.gridy = 15;
+        c.gridwidth = 1;
+        c.ipady = 5;
+        pane.add(textFieldSend, c);
+
+        JButton btnSend = new JButton("Send");
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 0;
+        c.weighty = 0;
+        c.gridx = 1;
+        c.gridy = 16;
+        c.gridheight = 1;
+        pane.add(btnSend, c);
+
+        // text field used to input message
+        JTextField textFieldKickOut;
+        textFieldKickOut = new JTextField();
+        c.insets = new Insets(0, 0, 5, 5);
+        c.weightx = 0.0;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 1;
+        c.gridy = 17;
+        c.gridwidth = 1;
+        c.ipady = 5;
+        pane.add(textFieldKickOut, c);
+
+        JButton btnKickOut = new JButton("Kick Out");
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 0;
+        c.weighty = 0;
+        c.gridx = 1;
+        c.gridy = 18;
+        c.gridheight = 1;
+        pane.add(btnKickOut, c);
+
         // event listeners
         btnColorChooser.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
@@ -290,6 +387,14 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
         btnType.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
                 drawingArea.setType("Type");
+            }
+        });
+
+        btnSend.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent arg0) {
+                if (drawingArea != null) {
+                    drawingArea.getMessageConnection().sendChatMessage(new ChatMessage(ID, username, textFieldSend.getText()));
+                }
             }
         });
 
@@ -451,7 +556,7 @@ public class ClientUI extends UnicastRemoteObject implements ClientUIInterface {
 
     private void buildUI() {
         JFrame frame = new JFrame("White Board");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         addComponentsToPane(frame.getContentPane());
         frame.pack();

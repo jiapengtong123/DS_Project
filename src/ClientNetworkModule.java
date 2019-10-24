@@ -1,4 +1,5 @@
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import shapes.Shape;
 
 import javax.imageio.ImageIO;
@@ -7,6 +8,7 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.Socket;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -95,11 +97,11 @@ public class ClientNetworkModule {
     }
 
     // add a new shape to server
-    public String sendShape(List<Shape> shapes) {
+    public String sendShape(String ID, List<Shape> shapes) {
         try {
             // convert username to json and send to server
             Gson gson = new Gson();
-            output.writeUTF(gson.toJson(new Message("add_shape", "", shapes)));
+            output.writeUTF(gson.toJson(new Message(ID, "add_shape", shapes)));
             output.flush();
             // get back buffer image object
             Message message = gson.fromJson(input.readUTF(), Message.class);
@@ -138,5 +140,44 @@ public class ClientNetworkModule {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public void sendID(String ID, String option) {
+        try {
+            // convert username to json and send to server
+            Gson gson = new Gson();
+            output.writeUTF(gson.toJson(new Message(ID, option, "")));
+            output.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<ChatMessage> receiveMessagesList() {
+        Type typeChatMessageType = new TypeToken<List<ChatMessage>>() {
+        }.getType();
+        try {
+            Gson gson = new Gson();
+            Message message = gson.fromJson(input.readUTF(), Message.class);
+            List<ChatMessage> chatMessages = gson.fromJson(message.getData().toString(), typeChatMessageType);
+
+            return chatMessages;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public String sendChatMessage(ChatMessage chatMessage) {
+        try {
+            Gson gson = new Gson();
+            output.writeUTF(gson.toJson(new Message("chat_message", chatMessage)));
+            output.flush();
+            return "success";
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "fail";
     }
 }

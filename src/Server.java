@@ -23,8 +23,14 @@ public class Server {
     private List<Shape> shapes;
     private Graphics2D g2 = null;
     private BufferedImage bufferedImage = null;
+    private BufferedImage emptyImage = null;
     private static String messagePort = "3005";
     private static String drawingPort = "3006";
+    private Boolean isUpdated = false;
+    // chat room users
+    private List<User> userList = new ArrayList<>();
+    // users' messages
+    private List<ChatMessage> chatMessages = new ArrayList<>();
 
     Server() {
         try {
@@ -34,12 +40,24 @@ public class Server {
             e.printStackTrace();
         }
         shapes = new ArrayList<Shape>();
+        // set up the buffer image for all clients
         bufferedImage = new BufferedImage(600, 800, BufferedImage.TYPE_INT_RGB);
         g2 = bufferedImage.createGraphics();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                 RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setColor(Color.WHITE);
         g2.fillRect(0, 0, 600, 800);
+
+        // setup an empty image for kickout users
+        emptyImage = new BufferedImage(600, 800, BufferedImage.TYPE_INT_RGB);
+        Graphics2D empty_g2 = emptyImage.createGraphics();
+        empty_g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
+        empty_g2.setColor(Color.WHITE);
+        empty_g2.fillRect(0, 0, 600, 800);
+
+        // test data for chat messages
+        chatMessages.add(new ChatMessage("foo11", "Tom", "hello_world".trim()));
     }
 
     public static void main(String[] args) {
@@ -113,7 +131,14 @@ public class Server {
         if ("connect_user".equals(message.getOption())) {
             // generate an unique id and send back, data should be username
             String ID = generateID((String) message.getData());
-            ClientUIInterface ui = new ClientUI("localhost", messagePort, drawingPort);
+            ClientUIInterface ui = new ClientUI("localhost", messagePort, drawingPort, ID, (String) message.getData());
+
+            // add new user into user list and set role
+            if (userList.size() == 0) {
+                userList.add(new User(ID, (String) message.getData(), "manager", false));
+            } else {
+                userList.add(new User(ID, (String) message.getData(), "normal", false));
+            }
 
             // bind a new stub name with id
             registry.rebind(ID, ui);
@@ -128,6 +153,10 @@ public class Server {
             // covert message to shape data
             ArrayList<Shape> new_shapes = gson.fromJson(message.getData().toString(), typeShapeType);
 
+//            for (Shape shape : new_shapes){
+//                System.out.println(shape.getType());
+//            }
+
             // add new shape
             shapes.addAll(new_shapes);
 
@@ -135,8 +164,23 @@ public class Server {
             for (Shape shape : shapes) {
                 shape.draw(g2);
             }
+
+//            isUpdated = true;
+//            bufferedImage.notifyAll();
+
             // send back new image buffer messages
             return new Message("", "success");
+        }
+
+        if ("message_userlist".equals(message.getOption())) {
+            return new Message("", chatMessages);
+        }
+
+        if ("chat_message".equals(message.getOption())) {
+            Type type = new TypeToken<ChatMessage>() {
+            }.getType();
+            Gson gson = new Gson();
+            chatMessages.add(gson.fromJson(message.getData().toString(), type));
         }
         return null;
     }
@@ -168,18 +212,34 @@ public class Server {
             serverNetworkModule.setInput(new DataInputStream(clientSocket.getInputStream()));
             serverNetworkModule.setOutput(new DataOutputStream(clientSocket.getOutputStream()));
             while (true) {
-                serverNetworkModule.sendMessage(updateBufferImage());
+//                synchronized (bufferedImage) {
+//                    while (!isUpdated) {
+//                        bufferedImage.wait();
+//                    }
+                Message message = serverNetworkModule.getMessage();
+                serverNetworkModule.sendMessage(updateBufferImage(message));
+//                }
             }
 //            serverNetworkModule.stopConnection();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     // send back new image buffer messages
-    private Message updateBufferImage() throws RemoteException {
-        return new Message("", encodeToString(bufferedImage, "png"));
+    private Message updateBufferImage(Message message) throws RemoteException {
+        String ID = message.getID();
+
+        // user ID in list
+        for (User user : userList) {
+            if (user.getID().equals(ID)) {
+                // send the current image
+                return new Message("", encodeToString(bufferedImage, "jpg"));
+            }
+        }
+
+        // user is kick out not in the list, send an empty image
+        return new Message("", encodeToString(emptyImage, "jpg"));
     }
 
     // encode buffer image to string to transfer by json
