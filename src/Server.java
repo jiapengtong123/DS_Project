@@ -4,12 +4,18 @@ import shapes.Shape;
 
 import javax.imageio.ImageIO;
 import javax.net.ServerSocketFactory;
+import javax.swing.JOptionPane;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.reflect.Type;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -17,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
+import java.util.Vector;
 
 public class Server {
     private Registry registry;
@@ -31,11 +38,21 @@ public class Server {
     private List<User> userList = new ArrayList<>();
     // users' messages
     private List<ChatMessage> chatMessages = new ArrayList<>();
-
-    Server() {
+    
+    
+    static Vector<DatagramPacket> cursoc = new Vector<>(); 
+    
+    
+    static DatagramSocket ds =null;
+    
+    Server() throws Exception 
+    {
+    	
+    	
+    	ds=new DatagramSocket(9998);
         try {
             // define rmi port, 1099 is default
-            registry = LocateRegistry.createRegistry(1099);
+            registry = LocateRegistry.createRegistry(9995);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -86,34 +103,132 @@ public class Server {
 
             // Wait for connections.
             while (true) {
-                Socket client = server.accept();
-                System.out.println("Client " + ": Applying for connection!");
+            	
+      
+            	System.out.println("waiting........... : ");
+        		byte[] b1 = new byte[9999];
+        		DatagramPacket dp = new DatagramPacket(b1,b1.length);
+        		ds.receive(dp);
+    
+        		String nameofstudent = new String(dp.getData(),0,dp.getLength());
+        		
+        		System.out.println("New client request received : ");
+        	
+        		if(userList.size()==0)
+        		{
+        					
+        			String name= "Manager";
+        			
+        			byte[] b2=name.getBytes();
+        			InetAddress ia = InetAddress.getLocalHost();
+        			DatagramPacket dp1 = new DatagramPacket(b2,b2.length,ia,dp.getPort());
+        			ds.send(dp1);
+        			
+        			System.out.println("Adding this client as Manager ");  
+        	        cursoc.add(dp);
+        	        
+        	        Socket client = server.accept();
+                    System.out.println("Client " + ": Applying for connection!");
 
-                // Start a new thread for a connection
-                Thread t = new Thread(() -> serveClient(client));
-                t.start();
+                    // Start a new thread for a connection
+                    Thread t = new Thread(() -> serveClient(client));
+                    t.start();
+        		
+        			
+        		}
+        		else if(userList.size()>0)
+        		{
+        				DatagramPacket x=cursoc.firstElement();
+        				byte[] b2=nameofstudent.getBytes();
+        				InetAddress ia = InetAddress.getLocalHost();
+        				DatagramPacket dc = new DatagramPacket(b2,b2.length,ia,x.getPort());
+        				ds.send(dc);
+        			
+        				byte[] b2x = new byte[1024];
+        				DatagramPacket dpx = new DatagramPacket(b2x,b2x.length);
+        				ds.receive(dpx);
+        				String reply = new String(dpx.getData(),0,dpx.getLength());
+        				
+        				
+        				int choice=Integer.parseInt(reply.trim());
+        				
+        				if(choice==JOptionPane.YES_OPTION)
+        				{
+        					 
+        					//approval sending
+        					
+        					System.out.println("Approved by Manager adding now");
+        					String ans="Approved";
+        					byte[] b2xy=ans.getBytes();
+        					InetAddress iaxy = InetAddress.getLocalHost();
+        					DatagramPacket dpxy = new DatagramPacket(b2xy,b2xy.length,iaxy,dp.getPort());
+        					ds.send(dpxy);
+
+        				
+        					
+        			        cursoc.add(dp);
+        			        
+        			        
+        			        Socket client = server.accept();
+        	                System.out.println("Client " + ": Applying for connection!");
+
+        	                // Start a new thread for a connection
+        	                Thread t = new Thread(() -> serveClient(client));
+        	                t.start();
+        			       
+        			        
+        				}
+        				else 
+        				{
+        					String ans="NotApproved";
+        					byte[] b2xy=ans.getBytes();
+        					InetAddress iaxy = InetAddress.getLocalHost();
+        					DatagramPacket dpxy = new DatagramPacket(b2xy,b2xy.length,iaxy,dp.getPort());
+        					ds.send(dpxy);
+        					System.out.println("Rejected by Manager ")	;
+        					
+        				}
+        				
+        			}
+
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     // receive socket connection request, create an UUID for client rmi stub
-    private void serveClient(Socket client) {
-        try (Socket clientSocket = client) {
+    private void serveClient(Socket client)
+    {
+    	
+    	
+        try (Socket clientSocket = client)
+        {
             ServerNetworkModule serverNetworkModule = new ServerNetworkModule();
             serverNetworkModule.setInput(new DataInputStream(clientSocket.getInputStream()));
             serverNetworkModule.setOutput(new DataOutputStream(clientSocket.getOutputStream()));
             // store option use to stop server thread
             String option = "";
+            Message message = new Message();
+            
+            ds=new DatagramSocket(9998);
 
             while (!"stop".equals(option)) {
-                Message message = serverNetworkModule.getMessage();
+            	
+            	        		
+        		
+        		
+        		
+        		
+            	
+                message = serverNetworkModule.getMessage();
                 option = message.getOption();
 //                System.out.println("CLIENT " + " says: " + message.getData());
                 serverNetworkModule.sendMessage(handleOptions(message));
             }
 
+            stop(message.getID());
             serverNetworkModule.stopConnection();
         } catch (IOException e) {
             e.printStackTrace();
@@ -125,20 +240,39 @@ public class Server {
     public String generateID(String username) {
         return username + UUID.randomUUID();
     }
+    
+    
 
-    public Message handleOptions(Message message) throws RemoteException {
-        // if a new user connect, create a rmi object form him and return the stub name
+    public Message handleOptions(Message message) throws RemoteException
+    
+    
+    {
+    	
+		
+		
+		
+    	
+    	// if a new user connect, create a rmi object form him and return the stub name
         if ("connect_user".equals(message.getOption())) {
             // generate an unique id and send back, data should be username
             String ID = generateID((String) message.getData());
-            ClientUIInterface ui = new ClientUI("localhost", messagePort, drawingPort, ID, (String) message.getData());
+            String role = "normal";
 
             // add new user into user list and set role
             if (userList.size() == 0) {
-                userList.add(new User(ID, (String) message.getData(), "manager", false));
+                role = "manager";
+                userList.add(new User(ID, (String) message.getData(), role, false));
+                
+                
             } else {
-                userList.add(new User(ID, (String) message.getData(), "normal", false));
+                role = "normal";
+                
+                
+                
+                userList.add(new User(ID, (String) message.getData(), role, false));
             }
+
+            ClientUIInterface ui = new ClientUI("localhost", messagePort, drawingPort, ID, (String) message.getData(), role);
 
             // bind a new stub name with id
             registry.rebind(ID, ui);
@@ -196,7 +330,6 @@ public class Server {
             // user ID in list
             for (User user : userList) {
                 if (user.getID().equals(message.getID())) {
-                    System.out.println("user is in the list");
                     chatMessages.add(gson.fromJson(message.getData().toString(), type));
                 }
             }
@@ -223,6 +356,11 @@ public class Server {
                     kickOutUser(kickout_username, "");
                 }
             }
+        }
+        // reset buffer image to the manager's image
+        if ("open_canvas".equals(message.getOption())) {
+            BufferedImage bufferedImage = decodeToImage((String) message.getData());
+            openCanvas(bufferedImage);
         }
         return null;
     }
@@ -305,14 +443,51 @@ public class Server {
 
     // kick out a user from the list
     public void kickOutUser(String username, String id) {
+        boolean userExist = false;
         int index = 0;
 
         for (User user : userList) {
-            if (user.getID().equals(id) && user.getUsername().equals(username)) {
+            if (user.getUsername().equals(username)) {
+                userExist = true;
                 index = userList.indexOf(user);
             }
         }
 
+        if (userExist) {
+            userList.remove(index);
+        }
+    }
+
+    // user choose to stop, remove user from list
+    public void stop(String ID) {
+        int index = 0;
+        for (User user : userList) {
+            if (user.getID().equals(ID)) {
+                index = userList.indexOf(user);
+            }
+        }
         userList.remove(index);
+    }
+
+    public void openCanvas(BufferedImage bufferedImage) {
+        shapes.clear();
+        g2 = bufferedImage.createGraphics();
+        this.bufferedImage = bufferedImage;
+    }
+
+    // decode image string to a buffer image
+    public static BufferedImage decodeToImage(String imageString) {
+        BufferedImage image = null;
+        byte[] imageByte;
+        try {
+            Base64.Decoder decoder = Base64.getDecoder();
+            imageByte = decoder.decode(imageString);
+            ByteArrayInputStream bis = new ByteArrayInputStream(imageByte);
+            image = ImageIO.read(bis);
+            bis.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return image;
     }
 }

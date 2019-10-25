@@ -3,7 +3,8 @@ public class ChatMessage {
     private String username;
     private String content;
 
-    public ChatMessage(String user_id, String username, String content) {
+    public ChatMessage(String user_id, String username, String content)
+    {
         this.user_id = user_id;
         this.username = username;
         this.content = content;
@@ -17,15 +18,19 @@ public class ChatMessage {
         this.user_id = user_id;
     }
 
-    public String getContent() {
+    public String getContent() 
+    
+    {
         return content;
     }
 
-    public void setContent(String content) {
+    public void setContent(String content)
+    {
         this.content = content;
     }
 
-    public String getUsername() {
+    public String getUsername()
+    {
         return username;
     }
 
